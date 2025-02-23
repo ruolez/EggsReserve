@@ -49,12 +49,16 @@ const ReservationForm = ({
     },
   });
 
+  const nameInputRef = React.useRef<HTMLInputElement>(null);
+
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
     onSubmit(data);
+    form.reset();
+    nameInputRef.current?.focus();
   };
 
   return (
-    <Card className="w-full max-w-[600px] p-6 bg-white dark:bg-gray-800 transition-colors duration-300 shadow-lg rounded-xl mx-auto mt-4 md:mt-8">
+    <Card className="w-full max-w-[600px] p-6 bg-white dark:bg-gray-800 transition-colors duration-300 shadow-lg rounded-xl mx-auto">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
           <FormField
@@ -62,11 +66,11 @@ const ReservationForm = ({
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Name</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder=""
-                    className="border-gray-300 dark:border-white/20 h-10 text-base flex"
+                    placeholder="Name"
+                    className="border-gray-300 dark:border-white/20 h-12 text-base"
+                    ref={nameInputRef}
                     {...field}
                   />
                 </FormControl>
@@ -80,12 +84,11 @@ const ReservationForm = ({
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input
                     type="email"
-                    placeholder=""
-                    className="border-gray-300 dark:border-white/20"
+                    placeholder="Email"
+                    className="border-gray-300 dark:border-white/20 h-12"
                     {...field}
                   />
                 </FormControl>
@@ -99,12 +102,11 @@ const ReservationForm = ({
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Phone Number</FormLabel>
                 <FormControl>
                   <Input
                     type="tel"
-                    placeholder=""
-                    className="border-gray-300 dark:border-white/20"
+                    placeholder="Phone Number"
+                    className="border-gray-300 dark:border-white/20 h-12"
                     {...field}
                   />
                 </FormControl>
@@ -118,14 +120,13 @@ const ReservationForm = ({
             name="quantity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Quantity</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger className="border-gray-300 dark:border-white/20">
-                      <SelectValue placeholder="Select quantity" />
+                    <SelectTrigger className="border-gray-300 dark:border-white/20 h-12">
+                      <SelectValue placeholder="Select number of cartons" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>

@@ -95,14 +95,21 @@ const InventoryManagement = () => {
         </div>
 
         <div className="flex space-x-4">
-          <Input
-            type="number"
-            placeholder="Enter new stock level"
-            value={newStock}
-            onChange={(e) => setNewStock(e.target.value)}
-            min="0"
-            max={maxStock}
-          />
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleUpdateStock();
+            }}
+          >
+            <Input
+              type="number"
+              placeholder="Enter new stock level"
+              value={newStock}
+              onChange={(e) => setNewStock(e.target.value)}
+              min="0"
+              max={maxStock}
+            />
+          </form>
           <Button onClick={handleUpdateStock} disabled={isLoading || !newStock}>
             {isLoading ? "Updating..." : "Update Stock"}
           </Button>

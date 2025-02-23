@@ -46,6 +46,18 @@ export async function updateOrderStatus(
   return data;
 }
 
+export async function deleteOrder(orderNumber: string) {
+  const { error } = await supabase
+    .from("orders")
+    .delete()
+    .eq("order_number", orderNumber);
+
+  if (error) {
+    console.error("Error deleting order:", error);
+    throw error;
+  }
+}
+
 export async function updateStock(newQuantity: number) {
   const { data, error } = await supabase
     .rpc("update_stock_with_validation", { new_quantity: newQuantity })

@@ -72,50 +72,54 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300 p-4 md:p-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="md:text-4xl font-bold dark:text-white text-[#494949] text-2xl py-[unset] px-8">
-          SolBe Organics
-        </h1>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setShowAdminPin(true)}
-            className="text-sm text-muted-foreground hover:text-primary"
-          >
-            Admin →
-          </button>
-          <AdminPinDialog open={showAdminPin} onOpenChange={setShowAdminPin} />
-          <ThemeToggle />
+    <div className="h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-300 p-4 flex flex-col">
+      <div className="max-w-[1200px] mx-auto w-full mb-4">
+        <div className="flex items-center justify-between">
+          <h1 className="md:text-4xl font-bold dark:text-white text-[#494949] text-2xl">
+            SolBe Organics
+          </h1>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowAdminPin(true)}
+              className="text-sm text-muted-foreground hover:text-primary"
+            >
+              Admin →
+            </button>
+            <AdminPinDialog
+              open={showAdminPin}
+              onOpenChange={setShowAdminPin}
+            />
+            <ThemeToggle />
+          </div>
         </div>
       </div>
-      <div className="max-w-7xl w-full space-y-8 flex flex-col md:h-40 mx-auto my-0 p-4 justify-center items-center">
+      <div className="max-w-[1200px] mx-auto w-full space-y-8">
         <StockDisplay
           currentStock={currentStock}
           maxStock={maxStock}
           lastUpdated={lastUpdated}
         />
-
-        <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-          <DialogContent className="sm:max-w-[600px]">
-            {orderData && (
-              <OrderConfirmation
-                customerName={orderData.name}
-                orderNumber={orderData.orderNumber}
-                quantity={parseInt(orderData.quantity)}
-                email={orderData.email}
-                onClose={() => setShowConfirmation(false)}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
+        <div className="flex justify-center">
+          <ReservationForm
+            availableStock={currentStock}
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+          />
+        </div>
       </div>
-      <div className="w-full flex justify-center items-center px-4 my-4 md:my-8">
-        <ReservationForm
-          availableStock={currentStock}
-          onSubmit={handleSubmit}
-          isLoading={isLoading}
-        />
-      </div>
+      <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <DialogContent className="sm:max-w-[600px]">
+          {orderData && (
+            <OrderConfirmation
+              customerName={orderData.name}
+              orderNumber={orderData.orderNumber}
+              quantity={parseInt(orderData.quantity)}
+              email={orderData.email}
+              onClose={() => setShowConfirmation(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

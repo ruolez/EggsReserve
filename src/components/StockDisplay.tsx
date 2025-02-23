@@ -25,29 +25,27 @@ const StockDisplay = ({
   };
 
   return (
-    <Card className="w-full max-w-[1200px] bg-white dark:bg-gray-800 transition-colors duration-300 mx-auto p-6 shadow-lg rounded-xl">
-      <div className="flex flex-col md:flex-row gap-[24px] justify-center items-center rounded-[1px] border-[#646667]">
-        <div className="flex items-center gap-4">
-          <div className="bg-primary/10 rounded-full py-[4] opacity-100 py-[0.5] bg-[#ffffff]">
-            <div className="bg-white dark:bg-gray-700 rounded-full p-4 transition-colors duration-300">
-              <img
-                src="/eggs.png"
-                alt="Eggs"
-                className="object-contain h-20 w-20"
-              />
-            </div>
-          </div>
+    <Card className="w-full max-w-[1200px] bg-white dark:bg-gray-800 transition-colors duration-300 mx-auto p-2 md:p-3 shadow-lg rounded-xl">
+      <div className="flex flex-col md:flex-row gap-2 md:gap-[24px] justify-center items-center rounded-[1px] border-[#646667]">
+        <div className="flex items-center gap-2 md:gap-3">
+          <img
+            src="/eggs.png"
+            alt="Eggs"
+            className="object-contain md:w-24 md:h-24 w-20 h-20"
+          />
           <div>
-            <h2 className="text-2xl font-bold text-[#ff6a00]">Eggs Reserve</h2>
-            <p className="text-muted-foreground text-xs">
+            <h2 className="text-lg md:text-2xl font-bold text-[#ff6a00]">
+              Eggs Reserve
+            </h2>
+            <p className="text-muted-foreground text-[10px] md:text-xs">
               Last updated: {lastUpdated}
             </p>
           </div>
         </div>
 
-        <div className="flex flex-col items-center md:items-end gap-2">
+        <div className="flex flex-col items-center md:items-end ">
           <div className="flex items-center gap-3">
-            <span className="text-4xl font-bold">{currentStock}</span>
+            <span className="font-bold text-2xl">{currentStock}</span>
             <span className="text-xl text-muted-foreground">/ {maxStock}</span>
             <Badge
               className={`${statusColors[stockStatus]} text-white ml-2`}
@@ -57,7 +55,7 @@ const StockDisplay = ({
             </Badge>
           </div>
 
-          <div className="w-full md:w-64 h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div className="w-full md:w-64 h-2 bg-gray-200 rounded-full overflow-hidden gap-1 mx-1">
             <div
               className={`h-full ${statusColors[stockStatus]} transition-all duration-500 ease-in-out`}
               style={{ width: `${stockPercentage}%` }}
