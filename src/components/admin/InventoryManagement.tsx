@@ -59,7 +59,6 @@ const InventoryManagement = () => {
       toast({
         title: "Stock Updated",
         description: `Current stock is now ${updatedStock.current_quantity}`,
-        icon: <CheckCircle className="h-4 w-4" />,
       });
     } catch (error) {
       console.error("Error updating stock:", error);
@@ -67,7 +66,6 @@ const InventoryManagement = () => {
         variant: "destructive",
         title: "Error",
         description: "Failed to update stock. Please try again.",
-        icon: <AlertCircle className="h-4 w-4" />,
       });
     } finally {
       setIsLoading(false);

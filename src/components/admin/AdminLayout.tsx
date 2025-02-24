@@ -37,7 +37,7 @@ const AdminLayout = () => {
                 <ClipboardList className="h-5 w-5" />
                 <span>Orders</span>
               </Link>
-              <ThemeToggle className="hidden sm:flex" />
+              <ThemeToggle />
             </div>
           </div>
         </div>
