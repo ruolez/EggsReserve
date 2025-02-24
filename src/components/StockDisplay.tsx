@@ -31,7 +31,7 @@ const StockDisplay = ({
           <img
             src="/eggs.png"
             alt="Eggs"
-            className="object-contain md:w-24 md:h-24 w-20 h-20"
+            className="object-contain md:w-24 md:h-24 w-20 h-20 flex bg-[#ffffff] rounded-[50] rounded-[00] rounded-full"
           />
           <div>
             <h2 className="md:text-2xl font-bold text-[#ff6a00] text-3xl">
