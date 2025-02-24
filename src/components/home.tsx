@@ -75,7 +75,7 @@ const Home = () => {
     <div className="h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-300 p-4 flex flex-col">
       <div className="max-w-[1200px] mx-auto w-full mb-4">
         <div className="flex items-center justify-between">
-          <h1 className="font-light text-base flex flex-row justify-center items-center text-center static text-[#7d7d7d]">
+          <h1 className="font-light flex flex-row justify-center items-center text-center static text-[#7d7d7d] text-xs">
             organic without corn soy and glyphosates
           </h1>
           <div className="flex items-center gap-4">
@@ -83,7 +83,7 @@ const Home = () => {
               onClick={() => setShowAdminPin(true)}
               className="text-sm text-muted-foreground hover:text-primary"
             >
-              Admin →
+              Admin
             </button>
             <AdminPinDialog
               open={showAdminPin}
