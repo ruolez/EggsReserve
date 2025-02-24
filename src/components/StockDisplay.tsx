@@ -34,7 +34,7 @@ const StockDisplay = ({
             className="object-contain md:w-24 md:h-24 w-20 h-20"
           />
           <div>
-            <h2 className="text-lg md:text-2xl font-bold text-[#ff6a00]">
+            <h2 className="md:text-2xl font-bold text-[#ff6a00] text-3xl">
               Eggs Reserve
             </h2>
             <p className="text-muted-foreground text-[10px] md:text-xs">
