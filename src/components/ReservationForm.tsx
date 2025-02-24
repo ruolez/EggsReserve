@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import Cookies from "js-cookie";
 import { Button } from "./ui/button";
+import { X } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -51,14 +53,58 @@ const ReservationForm = ({
 
   const nameInputRef = React.useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    const savedContact = {
+      name: Cookies.get("customer_name") || "",
+      email: Cookies.get("customer_email") || "",
+      phone: Cookies.get("customer_phone") || "",
+    };
+
+    if (savedContact.name || savedContact.email || savedContact.phone) {
+      form.reset(savedContact);
+    }
+  }, []);
+
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
+    // Save contact info in cookies for 30 days
+    Cookies.set("customer_name", data.name, { expires: 30 });
+    Cookies.set("customer_email", data.email, { expires: 30 });
+    Cookies.set("customer_phone", data.phone, { expires: 30 });
+
     onSubmit(data);
     form.reset();
     nameInputRef.current?.focus();
   };
 
+  const clearForm = () => {
+    // Remove cookies
+    Cookies.remove("customer_name");
+    Cookies.remove("customer_email");
+    Cookies.remove("customer_phone");
+
+    // Reset form with all fields empty
+    form.reset({
+      name: "",
+      email: "",
+      phone: "",
+      quantity: "1",
+    });
+
+    // Focus on name input
+    nameInputRef.current?.focus();
+  };
+
   return (
-    <Card className="w-full max-w-[600px] p-6 bg-white dark:bg-gray-800 transition-colors duration-300 shadow-lg rounded-xl mx-auto">
+    <Card className="w-full max-w-[600px] p-6 bg-white dark:bg-gray-800 transition-colors duration-300 shadow-lg rounded-xl mx-auto relative">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute right-2 top-2"
+        onClick={clearForm}
+        type="button"
+      >
+        <X className="h-4 w-4" />
+      </Button>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
           <FormField
