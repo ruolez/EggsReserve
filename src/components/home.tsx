@@ -75,7 +75,7 @@ const Home = () => {
     <div className="h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-300 p-4 flex flex-col">
       <div className="max-w-[1200px] mx-auto w-full mb-4">
         <div className="flex items-center justify-between">
-          <h1 className="dark:text-white text-[#494949] font-light text-base flex justify-center items-center">
+          <h1 className="text-[#494949] font-light text-base flex flex-row justify-center items-center text-center static">
             organic without corn soy and glyphosates
           </h1>
           <div className="flex items-center gap-4">

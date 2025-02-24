@@ -21,7 +21,6 @@ const AdminLayout = () => {
                   ← Order
                 </a>
               </div>
-              <ThemeToggle className="sm:hidden" />
             </div>
             <div className="flex w-full sm:w-auto justify-between sm:justify-end sm:space-x-4 gap-2">
               <Link
