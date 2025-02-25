@@ -291,7 +291,6 @@ const OrdersManagement = () => {
 
                     <Select
                       value={order.status}
-                      className={`${statusColors[order.status].light} ${statusColors[order.status].dark}`}
                       onValueChange={async (newStatus) => {
                         if (newStatus === order.status) return;
                         setUpdatingStatus(order.order_number);
