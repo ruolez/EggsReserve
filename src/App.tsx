@@ -4,6 +4,7 @@ import { useRoutes, Routes, Route } from "react-router-dom";
 import Home from "./components/home";
 import AdminLayout from "./components/admin/AdminLayout";
 import InventoryManagement from "./components/admin/InventoryManagement";
+import ProductsManagement from "./components/admin/ProductsManagement";
 import OrdersManagement from "./components/admin/OrdersManagement";
 import routes from "tempo-routes";
 
@@ -21,6 +22,7 @@ function App() {
       children: [
         { path: "inventory", element: <InventoryManagement /> },
         { path: "orders", element: <OrdersManagement /> },
+        { path: "products", element: <ProductsManagement /> },
       ],
     },
     // Add Tempo route at the end

@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { Warehouse, ClipboardList } from "lucide-react";
+import { Warehouse, ClipboardList, Package } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 
 const AdminLayout = () => {
@@ -13,7 +13,7 @@ const AdminLayout = () => {
           <div className="flex flex-col sm:flex-row h-auto sm:h-16 items-center justify-between py-4 sm:py-0 gap-4 sm:gap-0">
             <div className="flex items-center gap-4 w-full sm:w-auto justify-between">
               <div className="flex items-center gap-4">
-                <h1 className="text-xl font-bold">Supplier Admin</h1>
+                <h1 className="text-xl font-bold">Control Panel</h1>
                 <a
                   href="/"
                   className="text-sm text-muted-foreground hover:text-primary"
@@ -36,6 +36,13 @@ const AdminLayout = () => {
               >
                 <ClipboardList className="h-5 w-5" />
                 <span>Orders</span>
+              </Link>
+              <Link
+                to="/admin/products"
+                className={`flex items-center justify-center sm:justify-start space-x-2 px-3 py-2 rounded-md flex-1 sm:flex-initial ${location.pathname === "/admin/products" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
+              >
+                <Package className="h-5 w-5" />
+                <span>Products</span>
               </Link>
               <ThemeToggle />
             </div>

@@ -120,7 +120,7 @@ const ReservationForm = ({
                     {...field}
                   />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-[#e7e2e2] bg-[#ba6b4b]" />
               </FormItem>
             )}
           />
@@ -193,7 +193,7 @@ const ReservationForm = ({
 
           <Button
             type="submit"
-            className="w-full h-14 text-lg font-semibold"
+            className="w-full h-14 text-lg font-semibold bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-700"
             disabled={isLoading}
           >
             {isLoading ? "Processing..." : "Reserve"}
