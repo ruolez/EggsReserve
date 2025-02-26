@@ -6,6 +6,7 @@ import AdminLayout from "./components/admin/AdminLayout";
 import InventoryManagement from "./components/admin/InventoryManagement";
 import ProductsManagement from "./components/admin/ProductsManagement";
 import OrdersManagement from "./components/admin/OrdersManagement";
+import EmailSettings from "./components/admin/EmailSettings";
 import routes from "tempo-routes";
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
         { path: "inventory", element: <InventoryManagement /> },
         { path: "orders", element: <OrdersManagement /> },
         { path: "products", element: <ProductsManagement /> },
+        { path: "email", element: <EmailSettings /> },
       ],
     },
     // Add Tempo route at the end

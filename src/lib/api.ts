@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { API_CONFIG, EMAIL_CONFIG } from "./config";
 
 export async function getStock() {
   const { data, error } = await supabase
@@ -34,7 +35,7 @@ export async function updateOrderStatus(
   // Get the current order
   const { data: currentOrder, error: fetchError } = await supabase
     .from("orders")
-    .select("quantity,status")
+    .select("id, quantity, status")
     .eq("order_number", orderNumber)
     .single();
 
@@ -83,6 +84,32 @@ export async function updateOrderStatus(
   if (error) {
     console.error("Error updating order:", error);
     throw error;
+  }
+
+  // If quantity was updated, also update the order_details to trigger total recalculation
+  if (newQuantity !== undefined && newQuantity !== currentOrder.quantity) {
+    // Get the order details
+    const { data: orderDetails, error: detailsError } = await supabase
+      .from("order_details")
+      .select("*")
+      .eq("order_id", currentOrder.id)
+      .single();
+
+    if (detailsError) {
+      console.error("Error fetching order details:", detailsError);
+      throw detailsError;
+    }
+
+    // Update the quantity in order_details
+    const { error: updateDetailsError } = await supabase
+      .from("order_details")
+      .update({ qty: newQuantity })
+      .eq("id", orderDetails.id);
+
+    if (updateDetailsError) {
+      console.error("Error updating order details:", updateDetailsError);
+      throw updateDetailsError;
+    }
   }
 
   return data;
@@ -205,6 +232,124 @@ export async function deleteProduct(id: string) {
   if (error) throw error;
 }
 
+export async function getEmailSettings() {
+  const { data, error } = await supabase
+    .from("email_settings")
+    .select("*")
+    .eq("id", 1)
+    .single();
+
+  if (error) {
+    console.error("Error fetching email settings:", error);
+    // Return default settings if there's an error
+    return {
+      smtp_host: "",
+      smtp_port: 587,
+      smtp_user: "",
+      smtp_password: "",
+      notification_email: "",
+    };
+  }
+  return data;
+}
+
+export async function updateEmailSettings(settings: {
+  smtp_host: string;
+  smtp_port: number;
+  smtp_user: string;
+  smtp_password: string;
+  notification_email: string;
+}) {
+  try {
+    // First check if the record exists
+    const { data: existingSettings, error: checkError } = await supabase
+      .from("email_settings")
+      .select("id")
+      .eq("id", 1)
+      .single();
+
+    if (checkError) {
+      console.log("Email settings record doesn't exist, creating it");
+      // If it doesn't exist, insert it
+      const { data: insertedData, error: insertError } = await supabase
+        .from("email_settings")
+        .insert([{
+          id: 1,
+          ...settings,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      return insertedData;
+    } else {
+      // If it exists, update it
+      const { data, error } = await supabase
+        .from("email_settings")
+        .update({
+          ...settings,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", 1)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+  } catch (error) {
+    console.error("Error updating email settings:", error);
+    throw error;
+  }
+}
+
+
+// Send order notification via the server API
+async function sendOrderNotification(order: any, orderDetails: any) {
+  try {
+    // Get email settings to check if they're configured
+    const { data: emailSettings, error } = await supabase
+      .from("email_settings")
+      .select("*")
+      .eq("id", 1)
+      .single();
+
+    if (error) {
+      console.log("Email notification skipped: Error fetching email settings");
+      return;
+    }
+
+    // Skip if email settings are not configured
+    if (!emailSettings || !emailSettings.notification_email || !emailSettings.smtp_host) {
+      console.log("Email notification skipped: Email settings not fully configured");
+      return;
+    }
+
+    // Call the server API to send the email
+    const response = await fetch(`http://solbe.info:3001/api/send-notification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ order, orderDetails }),
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to send email notification');
+    }
+    
+    console.log(`Email notification sent successfully. Message ID: ${result.messageId}`);
+    
+  } catch (error) {
+    console.error("Failed to send order notification:", error);
+    // Don't throw the error - we don't want to fail the order if notification fails
+  }
+}
+
 export async function createOrder(orderData: {
   order_number: string;
   customer_name: string;
@@ -266,6 +411,20 @@ export async function createOrder(orderData: {
 
   if (stockError) {
     throw stockError;
+  }
+
+  // Get order details for email notification
+  const { data: orderDetails, error: orderDetailsError } = await supabase
+    .from("order_details")
+    .select("*")
+    .eq("order_id", order.id)
+    .single();
+
+  if (!orderDetailsError && orderDetails) {
+    // Send email notification (don't await to avoid delaying the response)
+    sendOrderNotification(order, orderDetails).catch(err => {
+      console.error("Error sending notification email:", err);
+    });
   }
 
   return order;

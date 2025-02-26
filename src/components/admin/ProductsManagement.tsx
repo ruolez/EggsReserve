@@ -140,7 +140,14 @@ const ProductsManagement = () => {
               <Plus className="h-4 w-4 mr-2" /> Add Product
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent
+            // Disable all animations that cause the dialog to move
+            style={{
+              animation: 'none',
+              transform: 'translate(-50%, -50%)',
+              transition: 'none'
+            }}
+          >
             <DialogHeader>
               <DialogTitle>
                 {editingProduct ? "Edit Product" : "Add New Product"}
@@ -246,7 +253,14 @@ const ProductsManagement = () => {
                           <Pencil className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
+                      <DialogContent
+                        // Disable all animations that cause the dialog to move
+                        style={{
+                          animation: 'none',
+                          transform: 'translate(-50%, -50%)',
+                          transition: 'none'
+                        }}
+                      >
                         <DialogHeader>
                           <DialogTitle>Edit Product</DialogTitle>
                         </DialogHeader>
@@ -266,7 +280,14 @@ const ProductsManagement = () => {
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent>
+                      <AlertDialogContent
+                        // Disable all animations that cause the dialog to move
+                        style={{
+                          animation: 'none',
+                          transform: 'translate(-50%, -50%)',
+                          transition: 'none'
+                        }}
+                      >
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Product</AlertDialogTitle>
                           <AlertDialogDescription>

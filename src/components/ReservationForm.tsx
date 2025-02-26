@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Cookies from "js-cookie";
 import { Button } from "./ui/button";
-import { X } from "lucide-react";
+import { X, User, Mail, Phone, ShoppingCart } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -95,32 +95,39 @@ const ReservationForm = ({
   };
 
   return (
-    <Card className="w-full max-w-[600px] p-6 bg-white dark:bg-gray-800 transition-colors duration-300 shadow-lg rounded-xl mx-auto relative">
+    <Card className="w-full max-w-[350px] md:max-w-[600px] p-3 pt-5 md:p-6 md:pt-8 bg-card/80 backdrop-blur-sm border border-border/40 transition-all duration-300 shadow-md hover:shadow-lg rounded-xl mx-auto relative mt-0">
       <Button
         variant="ghost"
         size="icon"
-        className="absolute right-2 top-2"
+        className="absolute right-2 top-2 text-muted-foreground hover:text-foreground transition-colors"
         onClick={clearForm}
         type="button"
       >
-        <X className="h-4 w-4" />
+        <X className="h-3 w-3" />
       </Button>
+      
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3 mt-2 pb-2">
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="space-y-1">
+                <FormLabel className="text-xs font-medium">Name</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Name"
-                    className="border-gray-300 dark:border-white/20 h-12 text-base"
-                    ref={nameInputRef}
-                    {...field}
-                  />
+                  <div className="relative">
+                    <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                      <User className="h-3 w-3" />
+                    </div>
+                    <Input
+                      placeholder="Your full name"
+                      className="pl-8 border-input/60 focus:border-primary h-11 rounded-md transition-all text-sm"
+                      ref={nameInputRef}
+                      {...field}
+                    />
+                  </div>
                 </FormControl>
-                <FormMessage className="text-[#e7e2e2] bg-[#ba6b4b]" />
+                <FormMessage className="text-xs font-medium text-destructive" />
               </FormItem>
             )}
           />
@@ -129,16 +136,22 @@ const ReservationForm = ({
             control={form.control}
             name="email"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="space-y-1">
+                <FormLabel className="text-xs font-medium">Email</FormLabel>
                 <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    className="border-gray-300 dark:border-white/20 h-12"
-                    {...field}
-                  />
+                  <div className="relative">
+                    <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                      <Mail className="h-3 w-3" />
+                    </div>
+                    <Input
+                      type="email"
+                      placeholder="your.email@example.com"
+                      className="pl-8 border-input/60 focus:border-primary h-11 rounded-md transition-all text-sm"
+                      {...field}
+                    />
+                  </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-xs font-medium text-destructive" />
               </FormItem>
             )}
           />
@@ -147,16 +160,22 @@ const ReservationForm = ({
             control={form.control}
             name="phone"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="space-y-1">
+                <FormLabel className="text-xs font-medium">Phone</FormLabel>
                 <FormControl>
-                  <Input
-                    type="tel"
-                    placeholder="Phone Number"
-                    className="border-gray-300 dark:border-white/20 h-12"
-                    {...field}
-                  />
+                  <div className="relative">
+                    <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                      <Phone className="h-3 w-3" />
+                    </div>
+                    <Input
+                      type="tel"
+                      placeholder="(123) 456-7890"
+                      className="pl-8 border-input/60 focus:border-primary h-11 rounded-md transition-all text-sm"
+                      {...field}
+                    />
+                  </div>
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-xs font-medium text-destructive" />
               </FormItem>
             )}
           />
@@ -165,38 +184,51 @@ const ReservationForm = ({
             control={form.control}
             name="quantity"
             render={({ field }) => (
-              <FormItem>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="border-gray-300 dark:border-white/20 h-12">
-                      <SelectValue placeholder="Select number of cartons" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {Array.from(
-                      { length: Math.min(10, availableStock) },
-                      (_, i) => (
-                        <SelectItem key={i + 1} value={(i + 1).toString()}>
-                          {i + 1} {i === 0 ? "carton" : "cartons"}
-                        </SelectItem>
-                      ),
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
+              <FormItem className="space-y-1">
+                <FormLabel className="text-xs font-medium">Quantity</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                      <ShoppingCart className="h-3 w-3" />
+                    </div>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger className="pl-8 border-input/60 focus:border-primary h-11 rounded-md transition-all text-sm">
+                        <SelectValue placeholder="Select number of cartons" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from(
+                          { length: Math.min(10, availableStock) },
+                          (_, i) => (
+                            <SelectItem key={i + 1} value={(i + 1).toString()}>
+                              {i + 1} {i === 0 ? "carton" : "cartons"}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </FormControl>
+                <FormMessage className="text-xs font-medium text-destructive" />
               </FormItem>
             )}
           />
 
           <Button
             type="submit"
-            className="w-full h-14 text-lg font-semibold bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-700"
+            className="w-full h-10 text-base font-medium bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 rounded-md mt-4 shadow-md hover:shadow-lg"
             disabled={isLoading}
           >
-            {isLoading ? "Processing..." : "Reserve"}
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"></div>
+                <span>Processing...</span>
+              </div>
+            ) : (
+              "Reserve Now"
+            )}
           </Button>
         </form>
       </Form>

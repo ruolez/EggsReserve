@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import StockDisplay from "./StockDisplay";
 import ReservationForm from "./ReservationForm.tsx";
 import OrderConfirmation from "./OrderConfirmation";
-import { Dialog, DialogContent } from "./ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
 import { AdminPinDialog } from "./AdminPinDialog";
 import { ThemeToggle } from "./ThemeToggle";
 import { z } from "zod";
 import { getStock, createOrder } from "../lib/api";
+import { Egg } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -72,16 +73,14 @@ const Home = () => {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-300 p-4 flex flex-col">
-      <div className="max-w-[1200px] mx-auto w-full mb-4">
-        <div className="flex items-center justify-between">
-          <h1 className="font-light flex flex-row justify-center items-center text-center static text-[#7d7d7d] text-xs">
-            organic without corn soy and glyphosates
-          </h1>
+    <div className="h-[100vh] overflow-hidden bg-gradient-to-b from-background to-secondary/20 dark:from-background dark:to-secondary/5 transition-colors duration-500 p-1 md:p-2 flex flex-col">
+      <header className="max-w-[1200px] mx-auto w-full mb-1 md:mb-2 animate-in fade-in slide-in-from-top">
+        <div className="flex items-center justify-between py-0">
+          <div></div>
           <div className="flex items-center gap-4">
             <button
               onClick={() => setShowAdminPin(true)}
-              className="text-sm text-muted-foreground hover:text-primary"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               Admin
             </button>
@@ -92,23 +91,39 @@ const Home = () => {
             <ThemeToggle />
           </div>
         </div>
-      </div>
-      <div className="max-w-[1200px] mx-auto w-full space-y-8">
-        <StockDisplay
-          currentStock={currentStock}
-          maxStock={maxStock}
-          lastUpdated={lastUpdated}
-        />
-        <div className="flex justify-center">
+      </header>
+      
+      <main className="flex-1 max-w-[1200px] mx-auto w-full flex flex-col gap-1 md:gap-2 overflow-hidden">
+        <div className="animate-in fade-in slide-in-from-left" style={{ animationDelay: "100ms" }}>
+          <StockDisplay
+            currentStock={currentStock}
+            lastUpdated={lastUpdated}
+          />
+        </div>
+        
+        <div className="flex justify-center animate-in fade-in slide-in-from-right overflow-y-auto" style={{ animationDelay: "200ms", maxHeight: "calc(100vh - 180px)" }}>
           <ReservationForm
             availableStock={currentStock}
             onSubmit={handleSubmit}
             isLoading={isLoading}
           />
         </div>
-      </div>
+      </main>
+      
+      <footer className="mt-2 text-center text-xs md:text-sm text-muted-foreground max-w-[1200px] mx-auto w-full py-2">
+        <p>© {new Date().getFullYear()} SolBe Organics Inc. All rights reserved.</p>
+      </footer>
+      
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent
+          // Disable all animations that cause the dialog to move
+          style={{
+            animation: 'none',
+            transform: 'translate(-50%, -50%)',
+            transition: 'none'
+          }}
+        >
+          <DialogTitle className="sr-only">Order Confirmation</DialogTitle>
           {orderData && (
             <OrderConfirmation
               customerName={orderData.name}

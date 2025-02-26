@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 import { getOrders, updateOrderStatus, deleteOrder } from "../../lib/api";
+import { Calendar } from "../ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format, isAfter, isBefore, isValid, parseISO, startOfDay } from "date-fns";
+import { cn } from "../../lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,8 +66,13 @@ const OrdersManagement = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     loadOrders();
@@ -69,6 +80,47 @@ const OrdersManagement = () => {
     const interval = setInterval(loadOrders, 30000);
     return () => clearInterval(interval);
   }, [sortField, sortDirection]);
+
+  // Apply filters whenever orders, statusFilter, searchQuery, or date range changes
+  useEffect(() => {
+    let result = [...orders];
+    
+    // Apply status filter
+    if (statusFilter !== "all") {
+      result = result.filter(order => order.status === statusFilter);
+    }
+    
+    // Apply search filter (case insensitive)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(order => 
+        order.customer_name.toLowerCase().includes(query) ||
+        order.email.toLowerCase().includes(query) ||
+        order.order_number.toLowerCase().includes(query)
+      );
+    }
+    
+    // Apply date range filter
+    if (dateFrom && isValid(dateFrom)) {
+      const fromDate = startOfDay(dateFrom);
+      result = result.filter(order => {
+        const orderDate = parseISO(order.created_at);
+        return isAfter(orderDate, fromDate) || orderDate.getTime() === fromDate.getTime();
+      });
+    }
+    
+    if (dateTo && isValid(dateTo)) {
+      const toDate = startOfDay(dateTo);
+      // Add one day to include the end date fully
+      toDate.setDate(toDate.getDate() + 1);
+      result = result.filter(order => {
+        const orderDate = parseISO(order.created_at);
+        return isBefore(orderDate, toDate);
+      });
+    }
+    
+    setFilteredOrders(result);
+  }, [orders, statusFilter, searchQuery, dateFrom, dateTo]);
 
   const loadOrders = async () => {
     try {
@@ -84,6 +136,7 @@ const OrdersManagement = () => {
           : b[sortField].localeCompare(a[sortField]);
       });
       setOrders(sortedData);
+      setFilteredOrders(sortedData); // Initialize filtered orders with all orders
     } catch (error) {
       console.error("Error loading orders:", error);
     } finally {
@@ -107,6 +160,103 @@ const OrdersManagement = () => {
               .reduce((acc, order) => acc + order.quantity, 0)}{" "}
             cartons
           </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="flex-1">
+          <Input
+            placeholder="Search by name, email, or order #"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full"
+          />
+        </div>
+        <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[130px] justify-start text-left font-normal",
+                    !dateFrom && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateFrom ? format(dateFrom, "MMM d, yyyy") : "From Date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFrom}
+                  onSelect={setDateFrom}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[130px] justify-start text-left font-normal",
+                    !dateTo && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateTo ? format(dateTo, "MMM d, yyyy") : "To Date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateTo}
+                  onSelect={setDateTo}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            
+            {(dateFrom || dateTo) && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  setDateFrom(undefined);
+                  setDateTo(undefined);
+                }}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+          
+          <Select
+            value={statusFilter}
+            onValueChange={setStatusFilter}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Orders</SelectItem>
+              <SelectItem 
+                value="pending" 
+                className={`${statusColors.pending.light} ${statusColors.pending.dark}`}
+              >
+                Pending
+              </SelectItem>
+              <SelectItem 
+                value="complete" 
+                className={`${statusColors.complete.light} ${statusColors.complete.dark}`}
+              >
+                Complete
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -134,13 +284,13 @@ const OrdersManagement = () => {
               <th
                 className="text-left py-3 px-2 cursor-pointer select-none group hover:bg-gray-50 dark:hover:bg-gray-800"
                 onClick={() => {
-                  setSortField("quantity");
+                  setSortField("total");
                   setSortDirection(sortDirection === "asc" ? "desc" : "asc");
                 }}
               >
                 <div className="flex items-center gap-2">
-                  Qty
-                  {sortField === "quantity" && (
+                  Total
+                  {sortField === "total" && (
                     <span className="text-xs">
                       {sortDirection === "asc" ? "↑" : "↓"}
                     </span>
@@ -150,13 +300,13 @@ const OrdersManagement = () => {
               <th
                 className="text-left py-3 px-2 cursor-pointer select-none group hover:bg-gray-50 dark:hover:bg-gray-800"
                 onClick={() => {
-                  setSortField("total");
+                  setSortField("quantity");
                   setSortDirection(sortDirection === "asc" ? "desc" : "asc");
                 }}
               >
                 <div className="flex items-center gap-2">
-                  Total
-                  {sortField === "total" && (
+                  Qty
+                  {sortField === "quantity" && (
                     <span className="text-xs">
                       {sortDirection === "asc" ? "↑" : "↓"}
                     </span>
@@ -231,103 +381,112 @@ const OrdersManagement = () => {
             </tr>
           </thead>
           <tbody>
-            {orders.map((order, index) => (
+            {filteredOrders.map((order, index) => (
               <tr
                 key={order.order_number}
                 className={`border-b ${index % 2 === 0 ? "bg-gray-50 dark:bg-gray-800/50" : ""}`}
               >
                 <td className="py-3 px-2 text-muted-foreground">{index + 1}</td>
                 <td className="py-3 px-2">{order.customer_name}</td>
-                <td className="py-3 px-2">{order.quantity}</td>
                 <td className="py-3 px-2">
                   ${order.total?.toFixed(2) || "0.00"}
                 </td>
                 <td className="py-3 px-2">
-                  <div className="flex gap-2">
-                    <Select
-                      value={order.quantity.toString()}
-                      onValueChange={async (newQty) => {
-                        if (parseInt(newQty) === order.quantity) return;
-                        setUpdatingStatus(order.order_number);
-                        try {
-                          await updateOrderStatus(
-                            order.order_number,
-                            order.status,
-                            parseInt(newQty),
-                          );
-                          const updatedOrders = await getOrders();
-                          setOrders(updatedOrders);
-                          toast({
-                            title: "Quantity Updated",
-                            description: `Order quantity updated to ${newQty}`,
-                          });
-                        } catch (error) {
-                          console.error("Error updating quantity:", error);
-                          toast({
-                            variant: "destructive",
-                            title: "Error",
-                            description: "Failed to update quantity",
-                          });
-                        } finally {
-                          setUpdatingStatus(null);
-                        }
-                      }}
-                      disabled={
-                        updatingStatus === order.order_number ||
-                        order.status === "complete"
+                  <Select
+                    value={order.quantity.toString()}
+                    onValueChange={async (newQty) => {
+                      if (parseInt(newQty) === order.quantity) return;
+                      setUpdatingStatus(order.order_number);
+                      try {
+                        await updateOrderStatus(
+                          order.order_number,
+                          order.status,
+                          parseInt(newQty),
+                        );
+                        const updatedOrders = await getOrders();
+                        setOrders(updatedOrders);
+                        toast({
+                          title: "Quantity Updated",
+                          description: `Order quantity updated to ${newQty}`,
+                        });
+                      } catch (error) {
+                        console.error("Error updating quantity:", error);
+                        toast({
+                          variant: "destructive",
+                          title: "Error",
+                          description: "Failed to update quantity",
+                        });
+                      } finally {
+                        setUpdatingStatus(null);
                       }
+                    }}
+                    disabled={
+                      updatingStatus === order.order_number ||
+                      order.status === "complete"
+                    }
+                  >
+                    <SelectTrigger className="w-[80px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 10 }, (_, i) => (
+                        <SelectItem key={i + 1} value={(i + 1).toString()}>
+                          {i + 1}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </td>
+                <td className="py-3 px-2">
+                  <Select
+                    value={order.status}
+                    onValueChange={async (newStatus) => {
+                      if (newStatus === order.status) return;
+                      setUpdatingStatus(order.order_number);
+                      try {
+                        await updateOrderStatus(
+                          order.order_number,
+                          newStatus as "pending" | "complete",
+                        );
+                        const updatedOrders = await getOrders();
+                        setOrders(updatedOrders);
+                        toast({
+                          title: "Status Updated",
+                          description: `Order ${order.order_number} is now ${newStatus}`,
+                        });
+                      } catch (error) {
+                        console.error("Error updating status:", error);
+                        toast({
+                          variant: "destructive",
+                          title: "Error",
+                          description: "Failed to update status",
+                        });
+                      } finally {
+                        setUpdatingStatus(null);
+                      }
+                    }}
+                    disabled={updatingStatus === order.order_number}
+                  >
+                    <SelectTrigger 
+                      className={`w-[110px] ${statusColors[order.status].light} ${statusColors[order.status].dark}`}
                     >
-                      <SelectTrigger className="w-[80px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 10 }, (_, i) => (
-                          <SelectItem key={i + 1} value={(i + 1).toString()}>
-                            {i + 1}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <Select
-                      value={order.status}
-                      className={`${statusColors[order.status].light} ${statusColors[order.status].dark}`}
-                      onValueChange={async (newStatus) => {
-                        if (newStatus === order.status) return;
-                        setUpdatingStatus(order.order_number);
-                        try {
-                          await updateOrderStatus(
-                            order.order_number,
-                            newStatus as "pending" | "complete",
-                          );
-                          const updatedOrders = await getOrders();
-                          setOrders(updatedOrders);
-                          toast({
-                            title: "Status Updated",
-                            description: `Order ${order.order_number} is now ${newStatus}`,
-                          });
-                        } catch (error) {
-                          console.error("Error updating status:", error);
-                          toast({
-                            variant: "destructive",
-                            title: "Error",
-                            description: "Failed to update status",
-                          });
-                        } finally {
-                          setUpdatingStatus(null);
-                        }
-                      }}
-                      disabled={updatingStatus === order.order_number}
-                    >
-                      <SelectTrigger className="w-[110px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="complete">Complete</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem 
+                        value="pending" 
+                        className={`${statusColors.pending.light} ${statusColors.pending.dark}`}
+                      >
+                        Pending
+                      </SelectItem>
+                      <SelectItem 
+                        value="complete" 
+                        className={`${statusColors.complete.light} ${statusColors.complete.dark}`}
+                      >
+                        Complete
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </td>
                 <td className="py-3 px-2">
                   <AlertDialog>
@@ -340,7 +499,42 @@ const OrdersManagement = () => {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent
+                      // Disable all animations that cause the dialog to move
+                      style={{
+                        animation: 'none',
+                        transform: 'translate(-50%, -50%)',
+                        transition: 'none'
+                      }}
+                      // Add onKeyDown handler to trigger delete on Enter key
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          // Directly call the delete function
+                          (async () => {
+                            setUpdatingStatus(order.order_number);
+                            try {
+                              await deleteOrder(order.order_number);
+                              const updatedOrders = await getOrders();
+                              setOrders(updatedOrders);
+                              toast({
+                                title: "Order Deleted",
+                                description: `Order ${order.order_number} has been deleted`,
+                              });
+                            } catch (error) {
+                              console.error("Error deleting order:", error);
+                              toast({
+                                variant: "destructive",
+                                title: "Error",
+                                description: "Failed to delete order",
+                              });
+                            } finally {
+                              setUpdatingStatus(null);
+                            }
+                          })();
+                        }
+                      }}
+                    >
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete Order</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -392,6 +586,18 @@ const OrdersManagement = () => {
               </tr>
             ))}
           </tbody>
+          <tfoot className="border-t-2 border-gray-300 font-semibold">
+            <tr>
+              <td colSpan={2} className="py-3 px-2 text-right">Totals:</td>
+              <td className="py-3 px-2">
+                ${filteredOrders.reduce((sum, order) => sum + (order.total || 0), 0).toFixed(2)}
+              </td>
+              <td className="py-3 px-2">
+                {filteredOrders.reduce((sum, order) => sum + order.quantity, 0)} cartons
+              </td>
+              <td colSpan={5}></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </Card>

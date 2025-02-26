@@ -32,7 +32,15 @@ export function AdminPinDialog({ open, onOpenChange }: AdminPinDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent 
+        className="sm:max-w-[400px]"
+        // Disable all animations that cause the dialog to move
+        style={{
+          animation: 'none',
+          transform: 'translate(-50%, -50%)',
+          transition: 'none'
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Enter Admin PIN</DialogTitle>
         </DialogHeader>

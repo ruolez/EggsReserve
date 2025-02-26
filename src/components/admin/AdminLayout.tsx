@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { Warehouse, ClipboardList, Package } from "lucide-react";
+import { Warehouse, ClipboardList, Package, Mail } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 
 const AdminLayout = () => {
@@ -43,6 +43,13 @@ const AdminLayout = () => {
               >
                 <Package className="h-5 w-5" />
                 <span>Products</span>
+              </Link>
+              <Link
+                to="/admin/email"
+                className={`flex items-center justify-center sm:justify-start space-x-2 px-3 py-2 rounded-md flex-1 sm:flex-initial ${location.pathname === "/admin/email" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
+              >
+                <Mail className="h-5 w-5" />
+                <span>Email</span>
               </Link>
               <ThemeToggle />
             </div>
