@@ -3,6 +3,7 @@ import cors from 'cors';
 import nodemailer from 'nodemailer';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import cron from 'node-cron';
 
 // Load environment variables
 dotenv.config();
@@ -128,7 +129,61 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
+// Function to automatically increase stock by 3 cartons
+async function increaseStockDaily() {
+  try {
+    console.log('Running daily stock increase...');
+    
+    // Get current stock
+    const { data: currentStock, error: fetchError } = await supabase
+      .from("stock")
+      .select("current_quantity, max_quantity")
+      .eq("id", 1)
+      .single();
+    
+    if (fetchError) {
+      console.error("Error fetching current stock:", fetchError);
+      return;
+    }
+    
+    // Calculate new stock (current + 3)
+    const newQuantity = Math.min(currentStock.current_quantity + 3, currentStock.max_quantity);
+    
+    // Update stock using the existing validation function
+    const { data: updatedStock, error: updateError } = await supabase.rpc(
+      "update_stock_with_validation",
+      { new_quantity: newQuantity }
+    );
+    
+    if (updateError) {
+      console.error("Error updating stock:", updateError);
+      return;
+    }
+    
+    console.log(`Stock automatically increased to ${updatedStock.current_quantity}`);
+  } catch (error) {
+    console.error("Error in daily stock increase:", error);
+  }
+}
+
+// API endpoint to manually trigger stock increase (for testing)
+app.post('/api/increase-stock', async (req, res) => {
+  try {
+    await increaseStockDaily();
+    res.status(200).json({ success: true, message: 'Stock increased successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to increase stock', details: error.message });
+  }
+});
+
+// Schedule the stock increase to run daily at midnight
+cron.schedule('0 0 * * *', increaseStockDaily, {
+  scheduled: true,
+  timezone: "America/Los_Angeles" // Adjust timezone as needed
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('Daily stock increase scheduled for midnight');
 });

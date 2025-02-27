@@ -8,9 +8,10 @@ import {
   deleteOrder, 
   getOrdersWithDetails,
   exportOrdersToCSV,
-  importOrdersFromCSV
+  importOrdersFromCSV,
+  updateOrderFlag
 } from "../../lib/api";
-import { Download, Upload, FileText } from "lucide-react";
+import { Download, Upload, FileText, Flag } from "lucide-react";
 import { Calendar } from "../ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { CalendarIcon } from "lucide-react";
@@ -44,7 +45,8 @@ type SortField =
   | "status"
   | "created_at"
   | "email"
-  | "total";
+  | "total"
+  | "is_flagged";
 type SortDirection = "asc" | "desc";
 
 interface Order {
@@ -56,6 +58,7 @@ interface Order {
   status: "pending" | "complete";
   created_at: string;
   total: number | null;
+  is_flagged?: boolean;
 }
 
 const statusColors = {
@@ -82,6 +85,7 @@ const OrdersManagement = () => {
   const [dateFrom, setDateFrom] = useState<Date | undefined>(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [showAllOrders, setShowAllOrders] = useState<boolean>(false);
+  const [flaggedOrders, setFlaggedOrders] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     loadOrders();
@@ -143,16 +147,31 @@ const OrdersManagement = () => {
   const loadOrders = async () => {
     try {
       const data = await getOrders();
+      
+      // Initialize flaggedOrders state from database
+      const flaggedOrdersMap = {};
+      data.forEach(order => {
+        if (order.is_flagged) {
+          flaggedOrdersMap[order.order_number] = true;
+        }
+      });
+      setFlaggedOrders(flaggedOrdersMap);
+      
       const sortedData = [...data].sort((a, b) => {
         if (sortField === "quantity" || sortField === "total") {
           const aValue = a[sortField] || 0;
           const bValue = b[sortField] || 0;
+          return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+        } else if (sortField === "is_flagged") {
+          const aValue = a.is_flagged ? 1 : 0;
+          const bValue = b.is_flagged ? 1 : 0;
           return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
         }
         return sortDirection === "asc"
           ? a[sortField].localeCompare(b[sortField])
           : b[sortField].localeCompare(a[sortField]);
       });
+      
       setOrders(sortedData);
       setFilteredOrders(sortedData); // Initialize filtered orders with all orders
     } catch (error) {
@@ -537,6 +556,22 @@ const OrdersManagement = () => {
                   )}
                 </div>
               </th>
+              <th
+                className="text-left py-3 px-2 cursor-pointer select-none group hover:bg-gray-50 dark:hover:bg-gray-800"
+                onClick={() => {
+                  setSortField("is_flagged");
+                  setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  $?
+                  {sortField === "is_flagged" && (
+                    <span className="text-xs">
+                      {sortDirection === "asc" ? "↑" : "↓"}
+                    </span>
+                  )}
+                </div>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -742,6 +777,52 @@ const OrdersManagement = () => {
                   </div>
                 </td>
                 <td className="py-3 px-2">{order.order_number}</td>
+                <td className="py-3 px-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-0 h-auto"
+                    onClick={async () => {
+                      const newFlaggedState = !order.is_flagged;
+                      setUpdatingStatus(order.order_number);
+                      try {
+                        await updateOrderFlag(order.order_number, newFlaggedState);
+                        
+                        // Update local state
+                        setFlaggedOrders(prev => ({
+                          ...prev,
+                          [order.order_number]: newFlaggedState
+                        }));
+                        
+                        // Update the orders array with the new flag state
+                        const updatedOrders = orders.map(o => 
+                          o.order_number === order.order_number 
+                            ? { ...o, is_flagged: newFlaggedState } 
+                            : o
+                        );
+                        setOrders(updatedOrders);
+                        
+                        toast({
+                          title: "Flag Updated",
+                          description: `Order ${order.order_number} flag ${newFlaggedState ? 'marked' : 'unmarked'}`
+                        });
+                      } catch (error) {
+                        console.error("Error updating flag:", error);
+                        toast({
+                          variant: "destructive",
+                          title: "Error",
+                          description: "Failed to update flag"
+                        });
+                      } finally {
+                        setUpdatingStatus(null);
+                      }
+                    }}
+                  >
+                    <Flag 
+                      className={`h-5 w-5 ${order.is_flagged ? 'text-red-500' : 'text-gray-400'}`} 
+                    />
+                  </Button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -754,7 +835,7 @@ const OrdersManagement = () => {
               <td className="py-3 px-2">
                 {filteredOrders.reduce((sum, order) => sum + order.quantity, 0)} cartons
               </td>
-              <td colSpan={5}></td>
+              <td colSpan={6}></td>
             </tr>
           </tfoot>
         </table>

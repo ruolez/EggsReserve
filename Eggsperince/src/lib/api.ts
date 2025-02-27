@@ -33,6 +33,7 @@ export async function updateOrderStatus(
   orderNumber: string,
   status: "pending" | "complete",
   newQuantity?: number,
+  isFlagged?: boolean,
 ) {
   // Get the current order
   const { data: currentOrder, error: fetchError } = await supabase
@@ -71,9 +72,10 @@ export async function updateOrderStatus(
   }
 
   // Update the order
-  const updateData: { status?: string; quantity?: number } = {};
+  const updateData: { status?: string; quantity?: number; is_flagged?: boolean } = {};
   if (status) updateData.status = status;
   if (newQuantity !== undefined) updateData.quantity = newQuantity;
+  if (isFlagged !== undefined) updateData.is_flagged = isFlagged;
 
   const { data, error } = await supabase
     .from("orders")
@@ -360,6 +362,22 @@ export async function getOrderDetails(orderId: string) {
 
   if (error) {
     console.error("Error fetching order details:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function updateOrderFlag(orderNumber: string, isFlagged: boolean) {
+  const { data, error } = await supabase
+    .from("orders")
+    .update({ is_flagged: isFlagged })
+    .eq("order_number", orderNumber)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating order flag:", error);
     throw error;
   }
 
