@@ -56,9 +56,8 @@ export async function updateOrderStatus(
   let stockAdjustment = 0;
   if (newQuantity !== undefined && newQuantity !== currentOrder.quantity) {
     stockAdjustment = currentOrder.quantity - newQuantity;
-  } else if (status === "complete" && currentOrder.status === "pending") {
-    stockAdjustment = currentOrder.quantity;
   }
+  // Removed the condition that was adjusting inventory when status changes from pending to complete
 
   // Update stock if needed
   if (stockAdjustment !== 0) {
