@@ -74,10 +74,13 @@ async function testEmailNotification() {
     const result = await response.json();
     
     if (response.ok) {
-      console.log('✅ Test email sent successfully!');
-      console.log(`Message ID: ${result.messageId}`);
+      console.log('✅ Test emails sent successfully!');
+      console.log(`Admin Message ID: ${result.adminMessageId}`);
+      console.log(`Customer Message ID: ${result.customerMessageId}`);
+      console.log(`Admin email sent to: [configured admin email]`);
+      console.log(`Customer email sent to: ${testOrder.email}`);
     } else {
-      console.error('❌ Failed to send test email:');
+      console.error('❌ Failed to send test emails:');
       console.error(result.error || 'Unknown error');
       if (result.details) {
         console.error('Details:', result.details);

@@ -37,7 +37,7 @@ const Home = () => {
         const stock = await getStock();
         setCurrentStock(stock.current_quantity);
         setMaxStock(stock.max_quantity);
-        setLastUpdated(new Date(stock.updated_at).toLocaleTimeString());
+        setLastUpdated(new Date(stock.updated_at).toLocaleDateString());
       } catch (error) {
         console.error("Error loading stock:", error);
       }
@@ -60,7 +60,7 @@ const Home = () => {
       // Refresh stock
       const stock = await getStock();
       setCurrentStock(stock.current_quantity);
-      setLastUpdated(new Date(stock.updated_at).toLocaleTimeString());
+      setLastUpdated(new Date(stock.updated_at).toLocaleDateString());
 
       setOrderData({ ...data, orderNumber });
       setShowConfirmation(true);

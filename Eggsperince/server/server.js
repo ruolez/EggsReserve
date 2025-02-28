@@ -68,8 +68,8 @@ app.post('/api/send-notification', async (req, res) => {
     const orderDate = new Date(order.created_at).toLocaleString();
     const totalAmount = orderDetails.qty * orderDetails.sale;
 
-    // Create email content
-    const mailOptions = {
+    // Create email content for admin notification
+    const adminMailOptions = {
       from: emailSettings.smtp_user,
       to: emailSettings.notification_email,
       subject: `New Order: #${order.order_number}`,
@@ -99,11 +99,54 @@ app.post('/api/send-notification', async (req, res) => {
       `,
     };
 
-    // Send email
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`Order notification email sent to ${emailSettings.notification_email}`, info.messageId);
+    // Create email content for customer confirmation
+    const customerMailOptions = {
+      from: emailSettings.smtp_user,
+      to: order.email,
+      subject: `Order Confirmation: #${order.order_number}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; padding: 20px 0;">
+            <h1 style="color: #4CAF50;">Order Confirmed!</h1>
+            <p>Thank you for your reservation, ${order.customer_name}.</p>
+          </div>
+          
+          <div style="background-color: #f9f9f9; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+            <h2 style="margin-top: 0;">Order Details</h2>
+            <p><strong>Order Number:</strong> ${order.order_number}</p>
+            <p><strong>Date:</strong> ${orderDate}</p>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+              <tr style="background-color: #f2f2f2;">
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Product</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Quantity</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Price</th>
+                <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Total</th>
+              </tr>
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">${orderDetails.product}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${orderDetails.qty}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">$${orderDetails.sale.toFixed(2)}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">$${totalAmount.toFixed(2)}</td>
+              </tr>
+            </table>
+            
+            <p style="font-size: 18px;"><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</p>
+          </div>
+          
+          <div style="text-align: center; color: #666; font-size: 14px;">
+            <p>If you have any questions about your order, please contact us.</p>
+            <p>© ${new Date().getFullYear()} SolBe Organics Inc. All rights reserved.</p>
+          </div>
+        </div>
+      `,
+    };
+
+    // Send admin notification email
+    const adminInfo = await transporter.sendMail(adminMailOptions);
+    console.log(`Order notification email sent to admin (${emailSettings.notification_email})`, adminInfo.messageId);
     
-    // Store notification in Supabase
+    // Store admin notification in Supabase
     try {
       await supabase.from("email_notifications").insert({
         order_id: order.id,
@@ -111,13 +154,35 @@ app.post('/api/send-notification', async (req, res) => {
         subject: `New Order: #${order.order_number}`,
         sent_at: new Date().toISOString(),
         status: 'sent',
-        message_id: info.messageId
+        message_id: adminInfo.messageId
       });
     } catch (err) {
       console.log("Note: email_notifications table not available, skipping log entry");
     }
 
-    return res.status(200).json({ success: true, messageId: info.messageId });
+    // Send customer confirmation email
+    const customerInfo = await transporter.sendMail(customerMailOptions);
+    console.log(`Order confirmation email sent to customer (${order.email})`, customerInfo.messageId);
+    
+    // Store customer notification in Supabase
+    try {
+      await supabase.from("email_notifications").insert({
+        order_id: order.id,
+        recipient: order.email,
+        subject: `Order Confirmation: #${order.order_number}`,
+        sent_at: new Date().toISOString(),
+        status: 'sent',
+        message_id: customerInfo.messageId
+      });
+    } catch (err) {
+      console.log("Note: email_notifications table not available, skipping log entry");
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      adminMessageId: adminInfo.messageId,
+      customerMessageId: customerInfo.messageId
+    });
   } catch (error) {
     console.error("Failed to send order notification email:", error);
     return res.status(500).json({ error: 'Failed to send email', details: error.message });

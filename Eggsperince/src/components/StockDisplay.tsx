@@ -10,7 +10,7 @@ interface StockDisplayProps {
 
 const StockDisplay = ({
   currentStock = 50,
-  lastUpdated = new Date().toLocaleTimeString(),
+  lastUpdated = new Date().toLocaleDateString(),
 }: StockDisplayProps) => {
   // Determine stock status based on absolute value
   const stockStatus = 
