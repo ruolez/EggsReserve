@@ -73,16 +73,18 @@ const Home = () => {
   };
 
   return (
-    <div className="h-[100vh] overflow-hidden bg-gradient-to-b from-background to-secondary/20 dark:from-background dark:to-secondary/5 transition-colors duration-500 p-1 md:p-2 flex flex-col">
-      <header className="max-w-[1200px] mx-auto w-full mb-1 md:mb-2 animate-in fade-in slide-in-from-top">
-        <div className="flex items-center justify-between py-0">
-          <div></div>
+    <div className="min-h-[100vh] overflow-hidden bg-gradient-to-b from-background via-background to-secondary/30 dark:from-background dark:via-background dark:to-secondary/10 transition-colors duration-500 flex flex-col">
+      <header className="max-w-[1200px] mx-auto w-full px-4 py-2 animate-in fade-in slide-in-from-top">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+
+          </div>
           <div className="flex items-center gap-4">
             <button
               onClick={() => setShowAdminPin(true)}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
             >
-              Admin
+              <span>Admin</span>
             </button>
             <AdminPinDialog
               open={showAdminPin}
@@ -93,15 +95,15 @@ const Home = () => {
         </div>
       </header>
       
-      <main className="flex-1 max-w-[1200px] mx-auto w-full flex flex-col gap-1 md:gap-2 overflow-hidden">
-        <div className="animate-in fade-in slide-in-from-left" style={{ animationDelay: "100ms" }}>
+      <main className="flex-1 max-w-[1200px] mx-auto w-full px-4 py-2 md:py-4 flex flex-col gap-6 overflow-y-auto">
+        <div className="w-full animate-in fade-in slide-in-from-top" style={{ animationDelay: "100ms" }}>
           <StockDisplay
             currentStock={currentStock}
             lastUpdated={lastUpdated}
           />
         </div>
         
-        <div className="flex justify-center animate-in fade-in slide-in-from-right overflow-y-auto" style={{ animationDelay: "200ms", maxHeight: "calc(100vh - 180px)" }}>
+        <div className="w-full animate-in fade-in slide-in-from-top" style={{ animationDelay: "200ms" }}>
           <ReservationForm
             availableStock={currentStock}
             onSubmit={handleSubmit}
@@ -110,8 +112,10 @@ const Home = () => {
         </div>
       </main>
       
-      <footer className="mt-2 text-center text-xs md:text-sm text-muted-foreground max-w-[1200px] mx-auto w-full py-2">
-        <p>© {new Date().getFullYear()} SolBe Organics Inc. All rights reserved.</p>
+      <footer className="bg-card/40 backdrop-blur-sm border-t border-border/20">
+        <div className="max-w-[1200px] mx-auto w-full px-4 py-4 text-center text-xs md:text-sm text-muted-foreground">
+          <p>© {new Date().getFullYear()} SolBe Organics Inc. All rights reserved.</p>
+        </div>
       </footer>
       
       <Dialog open={showConfirmation} onOpenChange={setShowConfirmation}>

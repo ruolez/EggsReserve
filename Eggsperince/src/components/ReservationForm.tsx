@@ -95,19 +95,21 @@ const ReservationForm = ({
   };
 
   return (
-    <Card className="w-full max-w-[350px] md:max-w-[600px] p-3 pt-5 md:p-6 md:pt-8 bg-card/80 backdrop-blur-sm border border-border/40 transition-all duration-300 shadow-md hover:shadow-lg rounded-xl mx-auto relative mt-0">
+    <Card className="w-full max-w-[450px] p-6 bg-card/80 backdrop-blur-sm border border-border/40 transition-all duration-300 shadow-md hover:shadow-lg rounded-xl mx-auto relative">
+
+      
       <Button
         variant="ghost"
         size="icon"
-        className="absolute right-2 top-2 text-muted-foreground hover:text-foreground transition-colors"
+        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
         onClick={clearForm}
         type="button"
       >
-        <X className="h-3 w-3" />
+        <X className="h-4 w-4" />
       </Button>
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3 mt-2 pb-2">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <FormField
             control={form.control}
             name="name"
@@ -216,7 +218,7 @@ const ReservationForm = ({
             )}
           />
 
-          <Button
+<Button
             type="submit"
             className="w-full h-10 text-base font-medium bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 rounded-md mt-4 shadow-md hover:shadow-lg"
             disabled={isLoading}
