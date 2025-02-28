@@ -48,7 +48,7 @@ const StockDisplay = ({
             </div>
             <div>
               <h2 className="text-2xl sm:text-3xl font-bold text-primary">Eggs Reserve</h2>
-              <p className="text-xs sm:text-sm text-muted-foreground">organic without corn soy or glyphosate</p>
+              <p className="text-xs sm:text-sm text-muted-foreground"><b>organic</b> no corn soy or glyphosate</p>
             </div>
           </div>
           
@@ -57,7 +57,7 @@ const StockDisplay = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ShoppingBag className="h-5 w-5 text-primary" />
-                <span className="font-medium text-sm">Current Availability</span>
+                <span className="font-medium text-sm">Availability</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
