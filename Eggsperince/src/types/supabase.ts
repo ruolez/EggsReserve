@@ -9,6 +9,65 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      coops: {
+        Row: {
+          id: string
+          name: string
+          num_birds: number
+          has_rooster: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          num_birds: number
+          has_rooster?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          num_birds?: number
+          has_rooster?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      harvests: {
+        Row: {
+          id: string
+          coop_id: string
+          eggs_collected: number
+          collection_date: string
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          coop_id: string
+          eggs_collected: number
+          collection_date?: string
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          coop_id?: string
+          eggs_collected?: number
+          collection_date?: string
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "harvests_coop_id_fkey"
+            columns: ["coop_id"]
+            isOneToOne: false
+            referencedRelation: "coops"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       order_details: {
         Row: {
           cost: number

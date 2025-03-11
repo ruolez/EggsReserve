@@ -7,6 +7,9 @@ import InventoryManagement from "./components/admin/InventoryManagement";
 import ProductsManagement from "./components/admin/ProductsManagement";
 import OrdersManagement from "./components/admin/OrdersManagement";
 import EmailSettings from "./components/admin/EmailSettings";
+import CoopsManagement from "./components/admin/CoopsManagement";
+import HarvestManagement from "./components/admin/HarvestManagement";
+import HarvestStatistics from "./components/admin/HarvestStatistics";
 import routes from "tempo-routes";
 
 function App() {
@@ -25,6 +28,9 @@ function App() {
         { path: "orders", element: <OrdersManagement /> },
         { path: "products", element: <ProductsManagement /> },
         { path: "email", element: <EmailSettings /> },
+        { path: "coops", element: <CoopsManagement /> },
+        { path: "harvest", element: <HarvestManagement /> },
+        { path: "statistics", element: <HarvestStatistics /> },
       ],
     },
     // Add Tempo route at the end

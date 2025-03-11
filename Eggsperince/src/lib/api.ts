@@ -447,6 +447,269 @@ export function exportOrdersToCSV(ordersWithDetails) {
   return csv;
 }
 
+// Coop Management Functions
+export async function getCoops() {
+  const { data, error } = await supabase
+    .from("coops")
+    .select("*")
+    .order("name");
+
+  if (error) {
+    console.error("Error fetching coops:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function getCoop(id: string) {
+  const { data, error } = await supabase
+    .from("coops")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    console.error("Error fetching coop:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function createCoop(coopData: {
+  name: string;
+  num_birds: number;
+  has_rooster: boolean;
+}) {
+  const { data, error } = await supabase
+    .from("coops")
+    .insert([coopData])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating coop:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function updateCoop(
+  id: string,
+  coopData: {
+    name?: string;
+    num_birds?: number;
+    has_rooster?: boolean;
+  }
+) {
+  const { data, error } = await supabase
+    .from("coops")
+    .update(coopData)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating coop:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function deleteCoop(id: string) {
+  const { error } = await supabase
+    .from("coops")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error deleting coop:", error);
+    throw error;
+  }
+}
+
+// Harvest Management Functions
+export async function getHarvests(filters?: {
+  coop_id?: string;
+  start_date?: string;
+  end_date?: string;
+}) {
+  let query = supabase
+    .from("harvests")
+    .select(`
+      *,
+      coops (
+        id,
+        name
+      )
+    `)
+    .order("collection_date", { ascending: false });
+
+  if (filters?.coop_id) {
+    query = query.eq("coop_id", filters.coop_id);
+  }
+
+  if (filters?.start_date) {
+    query = query.gte("collection_date", filters.start_date);
+  }
+
+  if (filters?.end_date) {
+    query = query.lte("collection_date", filters.end_date);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Error fetching harvests:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function recordHarvest(harvestData: {
+  coop_id: string;
+  eggs_collected: number;
+  collection_date?: string;
+  notes?: string;
+}) {
+  const { data, error } = await supabase
+    .from("harvests")
+    .insert([harvestData])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error recording harvest:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function updateHarvest(
+  id: string,
+  harvestData: {
+    coop_id?: string;
+    eggs_collected?: number;
+    collection_date?: string;
+    notes?: string;
+  }
+) {
+  const { data, error } = await supabase
+    .from("harvests")
+    .update(harvestData)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating harvest:", error);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function deleteHarvest(id: string) {
+  const { error } = await supabase
+    .from("harvests")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error deleting harvest:", error);
+    throw error;
+  }
+}
+
+// Statistics Functions
+export async function getHarvestStatistics(filters?: {
+  coop_id?: string;
+  start_date?: string;
+  end_date?: string;
+  group_by?: 'day' | 'week' | 'month' | 'coop';
+}) {
+  // Get all harvests based on filters
+  const harvests = await getHarvests(filters);
+  
+  if (!harvests || harvests.length === 0) {
+    return {
+      totalEggs: 0,
+      averagePerDay: 0,
+      byCoops: [],
+      byDate: []
+    };
+  }
+
+  // Calculate total eggs
+  const totalEggs = harvests.reduce((sum, h) => sum + h.eggs_collected, 0);
+  
+  // Group by coop
+  const coopMap = new Map();
+  harvests.forEach(h => {
+    const coopId = h.coop_id;
+    const coopName = h.coops?.name || 'Unknown';
+    
+    if (!coopMap.has(coopId)) {
+      coopMap.set(coopId, { 
+        id: coopId, 
+        name: coopName, 
+        totalEggs: 0 
+      });
+    }
+    
+    coopMap.get(coopId).totalEggs += h.eggs_collected;
+  });
+  
+  // Group by date
+  const dateMap = new Map();
+  harvests.forEach(h => {
+    const date = h.collection_date;
+    
+    if (!dateMap.has(date)) {
+      dateMap.set(date, { 
+        date, 
+        totalEggs: 0 
+      });
+    }
+    
+    dateMap.get(date).totalEggs += h.eggs_collected;
+  });
+  
+  // Calculate average per day
+  const uniqueDates = new Set(harvests.map(h => h.collection_date)).size;
+  const averagePerDay = uniqueDates > 0 ? totalEggs / uniqueDates : 0;
+  
+  return {
+    totalEggs,
+    averagePerDay,
+    byCoops: Array.from(coopMap.values()),
+    byDate: Array.from(dateMap.values()).sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    )
+  };
+}
+
+export function exportHarvestData(harvests) {
+  // Define the CSV columns
+  const csvData = harvests.map(harvest => {
+    return {
+      coop_name: harvest.coops?.name || 'Unknown',
+      collection_date: harvest.collection_date,
+      eggs_collected: harvest.eggs_collected,
+      notes: harvest.notes || ''
+    };
+  });
+
+  // Convert to CSV
+  const csv = unparse(csvData);
+  return csv;
+}
+
 export async function importOrdersFromCSV(csvContent: string) {
   // Parse CSV content
   interface CSVRow {

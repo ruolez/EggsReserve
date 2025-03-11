@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { Warehouse, ClipboardList, Package, Mail } from "lucide-react";
+import { Warehouse, ClipboardList, Package, Mail, Home, Egg, BarChart } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 
 const AdminLayout = () => {
@@ -50,6 +50,27 @@ const AdminLayout = () => {
               >
                 <Mail className="h-5 w-5" />
                 <span>Email</span>
+              </Link>
+              <Link
+                to="/admin/coops"
+                className={`flex items-center justify-center sm:justify-start space-x-2 px-3 py-2 rounded-md flex-1 sm:flex-initial ${location.pathname === "/admin/coops" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
+              >
+                <Home className="h-5 w-5" />
+                <span>Coops</span>
+              </Link>
+              <Link
+                to="/admin/harvest"
+                className={`flex items-center justify-center sm:justify-start space-x-2 px-3 py-2 rounded-md flex-1 sm:flex-initial ${location.pathname === "/admin/harvest" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
+              >
+                <Egg className="h-5 w-5" />
+                <span>Harvest</span>
+              </Link>
+              <Link
+                to="/admin/statistics"
+                className={`flex items-center justify-center sm:justify-start space-x-2 px-3 py-2 rounded-md flex-1 sm:flex-initial ${location.pathname === "/admin/statistics" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
+              >
+                <BarChart className="h-5 w-5" />
+                <span>Stats</span>
               </Link>
               <ThemeToggle />
             </div>
