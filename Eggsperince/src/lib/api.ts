@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
 import { API_CONFIG, EMAIL_CONFIG } from "./config";
 import { parse, unparse } from 'papaparse';
-import { isValid } from 'date-fns';
+import { isValid, format } from 'date-fns';
 
 export async function getStock() {
   const { data, error } = await supabase
@@ -708,6 +708,120 @@ export function exportHarvestData(harvests) {
   // Convert to CSV
   const csv = unparse(csvData);
   return csv;
+}
+
+export async function importHarvestsFromCSV(csvContent: string) {
+  // Parse CSV content
+  interface CSVRow {
+    coop_name: string;
+    collection_date: string;
+    eggs_collected: string;
+    notes?: string;
+  }
+  
+  const { data } = parse<CSVRow>(csvContent, { header: true, skipEmptyLines: true });
+  
+  const results = {
+    success: 0,
+    errors: [] as string[]
+  };
+  
+  // Get all coops for name lookup
+  const { data: allCoops, error: coopsError } = await supabase
+    .from("coops")
+    .select("id, name");
+    
+  if (coopsError) {
+    throw new Error(`Error fetching coops: ${coopsError.message}`);
+  }
+  
+  // Create a map of coop names to IDs for quick lookup
+  const coopMap = new Map();
+  allCoops.forEach(coop => {
+    coopMap.set(coop.name.toLowerCase(), coop.id);
+  });
+  
+  // Process each row
+  for (const row of data) {
+    try {
+      // Validate required fields
+      if (!row.coop_name || !row.collection_date || !row.eggs_collected) {
+        results.errors.push(`Missing required fields in row: ${JSON.stringify(row)}`);
+        continue;
+      }
+      
+      // Find coop ID by name
+      const coopName = row.coop_name.trim();
+      const coopId = coopMap.get(coopName.toLowerCase());
+      
+      if (!coopId) {
+        results.errors.push(`Coop not found: ${coopName}`);
+        continue;
+      }
+      
+      // Validate date format
+      const collectionDate = new Date(row.collection_date);
+      if (!isValid(collectionDate)) {
+        results.errors.push(`Invalid date format: ${row.collection_date}`);
+        continue;
+      }
+      
+      // Validate eggs collected is a number
+      const eggsCollected = parseInt(row.eggs_collected);
+      if (isNaN(eggsCollected) || eggsCollected <= 0) {
+        results.errors.push(`Invalid eggs collected value: ${row.eggs_collected}`);
+        continue;
+      }
+      
+      // Create harvest data
+      const harvestData = {
+        coop_id: coopId,
+        eggs_collected: eggsCollected,
+        collection_date: format(collectionDate, 'yyyy-MM-dd'),
+        notes: row.notes || null
+      };
+      
+      // Check if a harvest already exists for this coop and date
+      const { data: existingHarvest } = await supabase
+        .from("harvests")
+        .select("id")
+        .eq("coop_id", coopId)
+        .eq("collection_date", harvestData.collection_date)
+        .single();
+      
+      if (existingHarvest) {
+        // Update existing harvest
+        const { error: updateError } = await supabase
+          .from("harvests")
+          .update({
+            eggs_collected: harvestData.eggs_collected,
+            notes: harvestData.notes
+          })
+          .eq("id", existingHarvest.id);
+        
+        if (updateError) {
+          results.errors.push(`Error updating harvest for ${row.coop_name} on ${row.collection_date}: ${updateError.message}`);
+          continue;
+        }
+      } else {
+        // Create new harvest
+        const { error: insertError } = await supabase
+          .from("harvests")
+          .insert([harvestData]);
+        
+        if (insertError) {
+          results.errors.push(`Error creating harvest for ${row.coop_name} on ${row.collection_date}: ${insertError.message}`);
+          continue;
+        }
+      }
+      
+      results.success++;
+    } catch (error) {
+      results.errors.push(`Unexpected error processing row: ${error.message}`);
+    }
+  }
+  
+  return results;
 }
 
 export async function importOrdersFromCSV(csvContent: string) {

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { DateRange } from "react-day-picker";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
@@ -6,13 +7,15 @@ import { Textarea } from "../ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Calendar } from "../ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { format } from "date-fns";
-import { CalendarIcon, Trash2, Edit, Plus } from "lucide-react";
+import { format, subDays } from "date-fns";
+import { CalendarIcon, Trash2, Edit, Plus, Download, Upload, AlertCircle, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../ui/dialog";
+import DatePickerWithRange from "../ui/date-picker-with-range";
 import { useToast } from "../ui/use-toast";
-import { getCoops, getHarvests, recordHarvest, updateHarvest, deleteHarvest } from "../../lib/api";
+import { getCoops, getHarvests, recordHarvest, updateHarvest, deleteHarvest, exportHarvestData, importHarvestsFromCSV } from "../../lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Input } from "../ui/input";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 
 interface Coop {
   id: string;
@@ -42,12 +45,19 @@ const HarvestManagement = () => {
   const [coops, setCoops] = useState<Coop[]>([]);
   const [harvests, setHarvests] = useState<Harvest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: subDays(new Date(), 30),
+    to: new Date()
+  });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isImportResultsDialogOpen, setIsImportResultsDialogOpen] = useState(false);
   const [selectedHarvest, setSelectedHarvest] = useState<Harvest | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [notes, setNotes] = useState("");
   const [coopHarvests, setCoopHarvests] = useState<CoopHarvestData[]>([]);
+  const [importResults, setImportResults] = useState<{ success: number; errors: string[] } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadCoops();
@@ -83,7 +93,11 @@ const HarvestManagement = () => {
   const loadHarvests = async () => {
     setIsLoading(true);
     try {
-      const data = await getHarvests();
+      const filters = {
+        start_date: dateRange.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
+        end_date: dateRange.to ? format(dateRange.to, "yyyy-MM-dd") : undefined
+      };
+      const data = await getHarvests(filters);
       setHarvests(data);
     } catch (error) {
       console.error("Error loading harvests:", error);
@@ -96,6 +110,11 @@ const HarvestManagement = () => {
       setIsLoading(false);
     }
   };
+
+  // Reload harvests when date range changes
+  useEffect(() => {
+    loadHarvests();
+  }, [dateRange]);
 
   const handleOpenDialog = (harvest?: Harvest) => {
     if (harvest) {
@@ -246,14 +265,152 @@ const HarvestManagement = () => {
     return coop ? coop.name : "Unknown Coop";
   };
 
+  // CSV Export function
+  const handleExportCSV = () => {
+    if (harvests.length === 0) {
+      toast({
+        title: "No Data",
+        description: "There are no harvest records to export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const csvContent = exportHarvestData(harvests);
+      
+      // Create a blob and download link
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      
+      // Set up download attributes
+      link.setAttribute('href', url);
+      link.setAttribute('download', `egg-harvests-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+      link.style.visibility = 'hidden';
+      
+      // Add to document, click and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Export Successful",
+        description: `${harvests.length} harvest records exported to CSV.`,
+      });
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export harvest data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // CSV Import function
+  const handleImportClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    try {
+      // Read the file content
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const csvContent = event.target?.result as string;
+        
+        // Process the CSV content
+        const results = await importHarvestsFromCSV(csvContent);
+        setImportResults(results);
+        setIsImportResultsDialogOpen(true);
+        
+        // Reload harvests to show new data
+        loadHarvests();
+      };
+      
+      reader.readAsText(file);
+    } catch (error) {
+      console.error("Error importing CSV:", error);
+      toast({
+        title: "Import Failed",
+        description: "Failed to import harvest data. Please check your CSV file format.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-2xl font-bold">Egg Harvests</h2>
-        <Button onClick={() => handleOpenDialog()} disabled={coops.length === 0}>
-          <Plus className="h-4 w-4 mr-2" />
-          Record Harvest
-        </Button>
+        
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <div className="flex-grow">
+            <DatePickerWithRange 
+              date={dateRange} 
+              onDateChange={(newDateRange) => {
+                // Ensure we always have a 'to' date
+                setDateRange({
+                  from: newDateRange.from,
+                  to: newDateRange.to || newDateRange.from
+                });
+              }} 
+              className="w-full"
+            />
+          </div>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={loadHarvests} 
+            disabled={isLoading}
+            title="Refresh"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            onClick={handleExportCSV} 
+            disabled={harvests.length === 0 || isLoading}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleImportClick} 
+            disabled={coops.length === 0 || isLoading}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Import CSV
+          </Button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".csv"
+            className="hidden"
+          />
+          <Button onClick={() => handleOpenDialog()} disabled={coops.length === 0}>
+            <Plus className="h-4 w-4 mr-2" />
+            Record Harvest
+          </Button>
+        </div>
       </div>
 
       {coops.length === 0 ? (
@@ -521,6 +678,62 @@ const HarvestManagement = () => {
               className="text-xl py-8 px-10"
             >
               {isLoading ? "Deleting..." : "Delete Harvest"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Results Dialog */}
+      <Dialog open={isImportResultsDialogOpen} onOpenChange={setIsImportResultsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>CSV Import Results</DialogTitle>
+            <DialogDescription>
+              Summary of the harvest data import operation
+            </DialogDescription>
+          </DialogHeader>
+          
+          {importResults && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Successfully imported:</span>
+                <span className="font-bold text-green-600">{importResults.success} records</span>
+              </div>
+              
+              {importResults.errors.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <AlertCircle className="h-5 w-5 text-destructive mr-2" />
+                    <span className="font-medium">Errors encountered:</span>
+                  </div>
+                  
+                  <div className="bg-muted p-3 rounded-md max-h-[200px] overflow-y-auto">
+                    <ul className="list-disc pl-5 space-y-1">
+                      {importResults.errors.map((error, index) => (
+                        <li key={index} className="text-sm text-destructive">
+                          {error}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+              
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Import Complete</AlertTitle>
+                <AlertDescription>
+                  {importResults.success > 0 
+                    ? "The harvest data has been imported and the table has been updated."
+                    : "No records were imported. Please check the errors and try again with a corrected CSV file."}
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button onClick={() => setIsImportResultsDialogOpen(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
