@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
@@ -8,17 +8,42 @@ import { useToast } from "./ui/use-toast";
 interface AdminPinDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  redirectPath?: string;
+  onPinSuccess?: () => void;
 }
 
-export function AdminPinDialog({ open, onOpenChange }: AdminPinDialogProps) {
+export function AdminPinDialog({ 
+  open, 
+  onOpenChange, 
+  redirectPath = "/admin/orders",
+  onPinSuccess 
+}: AdminPinDialogProps) {
   const [pin, setPin] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Log when component mounts or redirectPath changes
+  useEffect(() => {
+    console.log("AdminPinDialog mounted/updated with redirectPath:", redirectPath);
+  }, [redirectPath]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("PIN submitted:", pin, "Expected PIN: 321");
+    console.log("Will redirect to:", redirectPath);
+    
     if (pin === "321") {
-      navigate("/admin/orders");
+      console.log("PIN correct, navigating to:", redirectPath);
+      
+      // Call the success callback if provided
+      if (onPinSuccess) {
+        console.log("Calling onPinSuccess callback");
+        onPinSuccess();
+      } else {
+        // Default behavior - navigate directly
+        navigate(redirectPath);
+      }
+      
       onOpenChange(false);
     } else {
       toast({

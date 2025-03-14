@@ -331,7 +331,7 @@ async function sendOrderNotification(order: any, orderDetails: any) {
     }
 
     // Call the server API to send the email
-    const response = await fetch(`http://solbe.info:3001/api/send-notification`, {
+    const response = await fetch(`${API_CONFIG.EMAIL_SERVER_URL}${EMAIL_CONFIG.SEND_NOTIFICATION_ENDPOINT}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

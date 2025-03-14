@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { ThemeProvider } from "./components/ThemeProvider";
-import { useRoutes, Routes, Route } from "react-router-dom";
+import { useRoutes, Routes, Route, Navigate } from "react-router-dom";
+import EggsRedirect from "./components/EggsRedirect";
 import Home from "./components/home";
 import AdminLayout from "./components/admin/AdminLayout";
 import InventoryManagement from "./components/admin/InventoryManagement";
@@ -20,6 +21,8 @@ function App() {
   // Handle app routes
   const appRoutes = useRoutes([
     { path: "/", element: <Home /> },
+    // Direct link to harvest management with PIN protection
+    { path: "/eggs", element: <EggsRedirect /> },
     {
       path: "/admin",
       element: <AdminLayout />,
