@@ -7,15 +7,20 @@
 
 // API configuration
 export const API_CONFIG = {
-  // Base URL for the email server API
+  // Base URL for the server API
   // For local development: http://localhost:3001
   // For production with Apache proxy: /api (relative URL)
   // For production with separate domains: https://your-api-domain.com
-  EMAIL_SERVER_URL: process.env.NODE_ENV === 'development' 
+  SERVER_URL: process.env.NODE_ENV === 'development' 
     ? 'http://localhost:3001' 
     : window.location.hostname === 'localhost' 
       ? 'http://localhost:3001' 
       : `${window.location.protocol}//${window.location.hostname}:3001`,
+  
+  // Alias for backward compatibility
+  get EMAIL_SERVER_URL() {
+    return this.SERVER_URL;
+  }
 };
 
 // Email configuration

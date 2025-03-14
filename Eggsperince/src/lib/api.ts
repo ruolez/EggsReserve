@@ -824,6 +824,116 @@ export async function importHarvestsFromCSV(csvContent: string) {
   return results;
 }
 
+// Expenses Management Functions
+export async function getExpenses(filters?: {
+  name?: string;
+  start_date?: string;
+  end_date?: string;
+}) {
+  try {
+    // Build query parameters
+    const queryParams = new URLSearchParams();
+    if (filters?.name) queryParams.append('name', filters.name);
+    if (filters?.start_date) queryParams.append('start_date', filters.start_date);
+    if (filters?.end_date) queryParams.append('end_date', filters.end_date);
+    
+    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    
+    // Make API request
+    const response = await fetch(`${API_CONFIG.SERVER_URL}/api/expenses${queryString}`);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to fetch expenses');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching expenses:", error);
+    throw error;
+  }
+}
+
+export async function createExpense(expenseData: {
+  name: string;
+  quantity: number;
+  cost: number;
+  date: string;
+  total_cost: number;
+}) {
+  try {
+    const response = await fetch(`${API_CONFIG.SERVER_URL}/api/expenses`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(expenseData),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to create expense');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error creating expense:", error);
+    throw error;
+  }
+}
+
+export async function updateExpense(
+  id: string,
+  expenseData: {
+    name?: string;
+    quantity?: number;
+    cost?: number;
+    date?: string;
+    total_cost?: number;
+  }
+) {
+  try {
+    const response = await fetch(`${API_CONFIG.SERVER_URL}/api/expenses/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(expenseData),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to update expense');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error updating expense:", error);
+    throw error;
+  }
+}
+
+export async function deleteExpense(id: string) {
+  try {
+    const response = await fetch(`${API_CONFIG.SERVER_URL}/api/expenses/${id}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to delete expense');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error deleting expense:", error);
+    throw error;
+  }
+}
+
 export async function importOrdersFromCSV(csvContent: string) {
   // Parse CSV content
   interface CSVRow {

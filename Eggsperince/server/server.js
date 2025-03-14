@@ -189,6 +189,134 @@ app.post('/api/send-notification', async (req, res) => {
   }
 });
 
+// Expenses API endpoints
+app.get('/api/expenses', async (req, res) => {
+  try {
+    const { name, start_date, end_date } = req.query;
+    
+    let query = supabase
+      .from("expenses")
+      .select("*")
+      .order("date", { ascending: false });
+    
+    if (name) {
+      query = query.ilike("name", `%${name}%`);
+    }
+    
+    if (start_date) {
+      query = query.gte("date", start_date);
+    }
+    
+    if (end_date) {
+      query = query.lte("date", end_date);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) {
+      console.error("Error fetching expenses:", error);
+      return res.status(500).json({ error: 'Failed to fetch expenses' });
+    }
+    
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Error in expenses endpoint:", error);
+    return res.status(500).json({ error: 'Server error', details: error.message });
+  }
+});
+
+app.post('/api/expenses', async (req, res) => {
+  try {
+    const { name, quantity, cost, date, total_cost } = req.body;
+    
+    if (!name || !quantity || !cost || !date || !total_cost) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    const { data, error } = await supabase
+      .from("expenses")
+      .insert([{
+        name,
+        quantity,
+        cost,
+        date,
+        total_cost
+      }])
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error creating expense:", error);
+      return res.status(500).json({ error: 'Failed to create expense' });
+    }
+    
+    return res.status(201).json(data);
+  } catch (error) {
+    console.error("Error in create expense endpoint:", error);
+    return res.status(500).json({ error: 'Server error', details: error.message });
+  }
+});
+
+app.put('/api/expenses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, quantity, cost, date, total_cost } = req.body;
+    
+    if (!id) {
+      return res.status(400).json({ error: 'Missing expense ID' });
+    }
+    
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (quantity !== undefined) updateData.quantity = quantity;
+    if (cost !== undefined) updateData.cost = cost;
+    if (date !== undefined) updateData.date = date;
+    if (total_cost !== undefined) updateData.total_cost = total_cost;
+    
+    const { data, error } = await supabase
+      .from("expenses")
+      .update(updateData)
+      .eq("id", id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error updating expense:", error);
+      return res.status(500).json({ error: 'Failed to update expense' });
+    }
+    
+    return res.status(200).json(data);
+  } catch (error) {
+    console.error("Error in update expense endpoint:", error);
+    return res.status(500).json({ error: 'Server error', details: error.message });
+  }
+});
+
+app.delete('/api/expenses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id) {
+      return res.status(400).json({ error: 'Missing expense ID' });
+    }
+    
+    const { error } = await supabase
+      .from("expenses")
+      .delete()
+      .eq("id", id);
+    
+    if (error) {
+      console.error("Error deleting expense:", error);
+      return res.status(500).json({ error: 'Failed to delete expense' });
+    }
+    
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Error in delete expense endpoint:", error);
+    return res.status(500).json({ error: 'Server error', details: error.message });
+  }
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok' });

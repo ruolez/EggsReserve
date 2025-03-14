@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { Warehouse, ClipboardList, Package, Mail, Home, Egg, BarChart } from "lucide-react";
+import { Warehouse, ClipboardList, Package, Mail, Home, Egg, BarChart, DollarSign } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 
 const AdminLayout = () => {
@@ -71,6 +71,13 @@ const AdminLayout = () => {
               >
                 <BarChart className="h-5 w-5" />
                 <span>Stats</span>
+              </Link>
+              <Link
+                to="/admin/expenses"
+                className={`flex items-center justify-center sm:justify-start space-x-2 px-3 py-2 rounded-md flex-1 sm:flex-initial ${location.pathname === "/admin/expenses" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
+              >
+                <DollarSign className="h-5 w-5" />
+                <span>Expenses</span>
               </Link>
               <ThemeToggle />
             </div>

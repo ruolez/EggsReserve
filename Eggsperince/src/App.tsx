@@ -11,6 +11,7 @@ import EmailSettings from "./components/admin/EmailSettings";
 import CoopsManagement from "./components/admin/CoopsManagement";
 import HarvestManagement from "./components/admin/HarvestManagement";
 import HarvestStatistics from "./components/admin/HarvestStatistics";
+import ExpensesManagement from "./components/admin/ExpensesManagement";
 import routes from "tempo-routes";
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
         { path: "coops", element: <CoopsManagement /> },
         { path: "harvest", element: <HarvestManagement /> },
         { path: "statistics", element: <HarvestStatistics /> },
+        { path: "expenses", element: <ExpensesManagement /> },
       ],
     },
     // Add Tempo route at the end
