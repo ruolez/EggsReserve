@@ -13,6 +13,7 @@ import HarvestManagement from "./components/admin/HarvestManagement";
 import HarvestStatistics from "./components/admin/HarvestStatistics";
 import BusinessStatistics from "./components/admin/BusinessStatistics";
 import ExpensesManagement from "./components/admin/ExpensesManagement";
+import ProductDisplaySettings from "./components/admin/ProductDisplaySettings";
 import routes from "tempo-routes";
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
         { path: "statistics", element: <HarvestStatistics /> },
         { path: "business-stats", element: <BusinessStatistics /> },
         { path: "expenses", element: <ExpensesManagement /> },
+        { path: "product-display", element: <ProductDisplaySettings /> },
       ],
     },
     // Add Tempo route at the end

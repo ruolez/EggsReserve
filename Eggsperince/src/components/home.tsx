@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
 import { AdminPinDialog } from "./AdminPinDialog";
 import { ThemeToggle } from "./ThemeToggle";
 import { z } from "zod";
-import { getStock, createOrder } from "../lib/api";
+import { getStock, createOrder, getProducts, getProductDisplaySetting } from "../lib/api";
 import { Egg } from "lucide-react";
 
 const formSchema = z.object({
@@ -14,12 +14,14 @@ const formSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
   quantity: z.string().min(1, "Please select a quantity"),
+  productType: z.string().min(1, "Please select a product"),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 interface OrderData extends FormData {
   orderNumber: string;
+  productType: string;
 }
 
 const Home = () => {
@@ -30,19 +32,30 @@ const Home = () => {
   const [showAdminPin, setShowAdminPin] = useState(false);
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [showProductSelection, setShowProductSelection] = useState(true);
 
   React.useEffect(() => {
-    const loadStock = async () => {
+    const loadData = async () => {
       try {
+        // Load stock
         const stock = await getStock();
         setCurrentStock(stock.current_quantity);
         setMaxStock(stock.max_quantity);
         setLastUpdated(new Date(stock.updated_at).toLocaleDateString());
+        
+        // Load products
+        const productsData = await getProducts();
+        setProducts(productsData);
+        
+        // Load product display setting
+        const displaySetting = await getProductDisplaySetting();
+        setShowProductSelection(displaySetting);
       } catch (error) {
-        console.error("Error loading stock:", error);
+        console.error("Error loading data:", error);
       }
     };
-    loadStock();
+    loadData();
   }, []);
 
   const handleSubmit = async (data: FormData) => {
@@ -55,6 +68,7 @@ const Home = () => {
         email: data.email,
         phone: data.phone,
         quantity: parseInt(data.quantity),
+        product_name: data.productType,
       });
 
       // Refresh stock
@@ -62,7 +76,17 @@ const Home = () => {
       setCurrentStock(stock.current_quantity);
       setLastUpdated(new Date(stock.updated_at).toLocaleDateString());
 
-      setOrderData({ ...data, orderNumber });
+      // Ensure all required properties are present
+      const orderDataWithProduct: OrderData = {
+        orderNumber,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        quantity: data.quantity,
+        productType: data.productType
+      };
+      
+      setOrderData(orderDataWithProduct);
       setShowConfirmation(true);
     } catch (error) {
       console.error("Error creating order:", error);
@@ -108,6 +132,8 @@ const Home = () => {
             availableStock={currentStock}
             onSubmit={handleSubmit}
             isLoading={isLoading}
+            products={products}
+            showProductSelection={showProductSelection}
           />
         </div>
       </main>
@@ -134,6 +160,7 @@ const Home = () => {
               orderNumber={orderData.orderNumber}
               quantity={parseInt(orderData.quantity)}
               email={orderData.email}
+              productType={orderData.productType}
               onClose={() => setShowConfirmation(false)}
             />
           )}

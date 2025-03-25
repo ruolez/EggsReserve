@@ -8,6 +8,7 @@ interface OrderConfirmationProps {
   orderNumber?: string;
   quantity?: number;
   email?: string;
+  productType?: string;
   onClose?: () => void;
 }
 
@@ -16,6 +17,7 @@ const OrderConfirmation = ({
   orderNumber = "ORD-123456",
   quantity = 2,
   email = "john.doe@example.com",
+  productType = "Carton of eggs",
   onClose = () => {},
 }: OrderConfirmationProps) => {
   const copyOrderNumber = () => {
@@ -61,8 +63,14 @@ const OrderConfirmation = ({
         
         <div className="flex items-center gap-3 p-2 bg-background/80 rounded-md shadow-sm">
           <Package className="h-4 w-4 text-muted-foreground" />
+          <span className="text-muted-foreground text-sm">Product:</span>
+          <span className="font-medium ml-auto">{productType}</span>
+        </div>
+        
+        <div className="flex items-center gap-3 p-2 bg-background/80 rounded-md shadow-sm">
+          <Package className="h-4 w-4 text-muted-foreground" />
           <span className="text-muted-foreground text-sm">Quantity:</span>
-          <span className="font-medium ml-auto">{quantity} cartons</span>
+          <span className="font-medium ml-auto">{quantity} {productType.toLowerCase().includes("cashew") ? "bags" : "cartons"}</span>
         </div>
         
         <div className="flex items-center gap-3 p-2 bg-background/80 rounded-md shadow-sm">

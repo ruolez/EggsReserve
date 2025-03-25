@@ -11,7 +11,8 @@ import {
   DollarSign,
   ShoppingCart,
   Settings,
-  ChevronDown
+  ChevronDown,
+  ToggleLeft
 } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 import {
@@ -124,6 +125,13 @@ const AdminLayout = () => {
                 >
                   <Mail className="h-5 w-5" />
                   <span>Email</span>
+                </Link>
+                <Link
+                  to="/admin/product-display"
+                  className={linkClass("/admin/product-display")}
+                >
+                  <ToggleLeft className="h-5 w-5" />
+                  <span>Display</span>
                 </Link>
                 <ThemeToggle />
               </div>

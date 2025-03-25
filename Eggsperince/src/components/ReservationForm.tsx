@@ -1,10 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Cookies from "js-cookie";
 import { Button } from "./ui/button";
-import { X, User, Mail, Phone, ShoppingCart } from "lucide-react";
+import { X, User, Mail, Phone, ShoppingCart, Package } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -28,19 +28,28 @@ const formSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
   quantity: z.string().min(1, "Please select a quantity"),
+  productType: z.string().min(1, "Please select a product"),
 });
 
 interface ReservationFormProps {
   availableStock?: number;
   onSubmit?: (data: z.infer<typeof formSchema>) => void;
   isLoading?: boolean;
+  products?: Array<{id: string, name: string, sale_price: number}>;
+  showProductSelection?: boolean;
 }
 
 const ReservationForm = ({
   availableStock = 100,
   onSubmit = (data) => console.log("Form submitted:", data),
   isLoading = false,
+  products = [
+    { id: "1", name: "Carton of eggs", sale_price: 10.00 },
+    { id: "2", name: "Dry Roasted Cashews 1 lb", sale_price: 12.50 }
+  ],
+  showProductSelection = true,
 }: ReservationFormProps) => {
+  const [selectedProduct, setSelectedProduct] = useState("Carton of eggs");
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -48,6 +57,7 @@ const ReservationForm = ({
       email: "",
       phone: "",
       quantity: "1",
+      productType: "Carton of eggs",
     },
   });
 
@@ -70,6 +80,11 @@ const ReservationForm = ({
     Cookies.set("customer_name", data.name, { expires: 30 });
     Cookies.set("customer_email", data.email, { expires: 30 });
     Cookies.set("customer_phone", data.phone, { expires: 30 });
+
+    // If product selection is not shown, default to eggs
+    if (!showProductSelection) {
+      data.productType = "Carton of eggs";
+    }
 
     onSubmit(data);
     form.reset();
@@ -182,6 +197,44 @@ const ReservationForm = ({
             )}
           />
 
+          {showProductSelection && (
+            <FormField
+              control={form.control}
+              name="productType"
+              render={({ field }) => (
+                <FormItem className="space-y-1">
+                  <FormLabel className="text-xs font-medium">Product</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <div className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                        <Package className="h-3 w-3" />
+                      </div>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setSelectedProduct(value);
+                        }}
+                        defaultValue={field.value}
+                      >
+                        <SelectTrigger className="pl-8 border-input/60 focus:border-primary h-11 rounded-md transition-all text-sm">
+                          <SelectValue placeholder="Select a product" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products.map((product) => (
+                            <SelectItem key={product.id} value={product.name}>
+                              {product.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </FormControl>
+                  <FormMessage className="text-xs font-medium text-destructive" />
+                </FormItem>
+              )}
+            />
+          )}
+
           <FormField
             control={form.control}
             name="quantity"
@@ -198,14 +251,16 @@ const ReservationForm = ({
                       defaultValue={field.value}
                     >
                       <SelectTrigger className="pl-8 border-input/60 focus:border-primary h-11 rounded-md transition-all text-sm">
-                        <SelectValue placeholder="Select number of cartons" />
+                        <SelectValue placeholder={`Select number of ${selectedProduct.toLowerCase().includes("cashew") ? "bags" : "cartons"}`} />
                       </SelectTrigger>
                       <SelectContent>
                         {Array.from(
                           { length: Math.min(10, availableStock) },
                           (_, i) => (
                             <SelectItem key={i + 1} value={(i + 1).toString()}>
-                              {i + 1} {i === 0 ? "carton" : "cartons"}
+                              {i + 1} {i === 0 
+                                ? (selectedProduct.toLowerCase().includes("cashew") ? "bag" : "carton") 
+                                : (selectedProduct.toLowerCase().includes("cashew") ? "bags" : "cartons")}
                             </SelectItem>
                           ),
                         )}
@@ -218,7 +273,7 @@ const ReservationForm = ({
             )}
           />
 
-<Button
+          <Button
             type="submit"
             className="w-full h-10 text-base font-medium bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300 rounded-md mt-4 shadow-md hover:shadow-lg"
             disabled={isLoading}
