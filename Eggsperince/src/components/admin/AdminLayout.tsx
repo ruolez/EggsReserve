@@ -1,6 +1,7 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { 
   Warehouse, 
   ClipboardList, 
@@ -15,6 +16,9 @@ import {
   ChevronDown,
   ToggleLeft
 } from "lucide-react";
+=======
+import { Warehouse, ClipboardList, Package, Mail, Home, Egg, BarChart, DollarSign } from "lucide-react";
+>>>>>>> parent of 5c66a73 (updated statistics)
 =======
 import { Warehouse, ClipboardList, Package, Mail, Home, Egg, BarChart, DollarSign } from "lucide-react";
 >>>>>>> parent of 5c66a73 (updated statistics)
@@ -39,6 +43,7 @@ const AdminLayout = () => {
                 </a>
               </div>
             </div>
+<<<<<<< HEAD
 <<<<<<< HEAD
             
             {/* Navigation Menu - Reorganized into logical groups */}
@@ -123,6 +128,8 @@ const AdminLayout = () => {
                 <ThemeToggle />
               </div>
 =======
+=======
+>>>>>>> parent of 5c66a73 (updated statistics)
             <div className="flex w-full sm:w-auto justify-between sm:justify-end sm:space-x-4 gap-2">
               <Link
                 to="/admin/inventory"
@@ -181,6 +188,9 @@ const AdminLayout = () => {
                 <span>Expenses</span>
               </Link>
               <ThemeToggle />
+<<<<<<< HEAD
+>>>>>>> parent of 5c66a73 (updated statistics)
+=======
 >>>>>>> parent of 5c66a73 (updated statistics)
             </div>
           </div>
