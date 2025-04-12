@@ -11,7 +11,6 @@ import EmailSettings from "./components/admin/EmailSettings";
 import CoopsManagement from "./components/admin/CoopsManagement";
 import HarvestManagement from "./components/admin/HarvestManagement";
 import HarvestStatistics from "./components/admin/HarvestStatistics";
-import BusinessStatistics from "./components/admin/BusinessStatistics";
 import ExpensesManagement from "./components/admin/ExpensesManagement";
 import ProductDisplaySettings from "./components/admin/ProductDisplaySettings";
 import routes from "tempo-routes";
@@ -37,7 +36,6 @@ function App() {
         { path: "coops", element: <CoopsManagement /> },
         { path: "harvest", element: <HarvestManagement /> },
         { path: "statistics", element: <HarvestStatistics /> },
-        { path: "business-stats", element: <BusinessStatistics /> },
         { path: "expenses", element: <ExpensesManagement /> },
         { path: "product-display", element: <ProductDisplaySettings /> },
       ],

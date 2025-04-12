@@ -11,11 +11,15 @@ export const API_CONFIG = {
   // For local development: http://localhost:3001
   // For production with Apache proxy: /api (relative URL)
   // For production with separate domains: https://your-api-domain.com
-  SERVER_URL: process.env.NODE_ENV === 'development' 
-    ? 'http://localhost:3001' 
-    : window.location.hostname === 'localhost' 
-      ? 'http://localhost:3001' 
-      : `${window.location.protocol}//${window.location.hostname}:3001`,
+  SERVER_URL: typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_SERVER_URL
+    ? import.meta.env.VITE_API_SERVER_URL
+    : (
+      process.env.NODE_ENV === 'development'
+        ? 'http://localhost:3001'
+        : window.location.hostname === 'localhost'
+          ? 'http://localhost:3001'
+          : `${window.location.protocol}//${window.location.hostname}:3001`
+    ),
   
   // Alias for backward compatibility
   get EMAIL_SERVER_URL() {

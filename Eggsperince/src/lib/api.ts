@@ -1121,9 +1121,11 @@ export async function createOrder(orderData: {
   }
 
   // Create order and update stock in a transaction using RPC
+  // Only include fields that exist in the 'orders' table
+  const { order_number, customer_name, email, phone, quantity } = orderData;
   const { data: order, error: orderError } = await supabase
     .from("orders")
-    .insert([orderData])
+    .insert([{ order_number, customer_name, email, phone, quantity }])
     .select()
     .single();
 
