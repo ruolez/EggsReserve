@@ -9,8 +9,7 @@ import {
   getOrdersWithDetails,
   exportOrdersToCSV,
   importOrdersFromCSV,
-  updateOrderFlag,
-  getProducts
+  updateOrderFlag
 } from "../../lib/api";
 import { Download, Upload, FileText, Flag } from "lucide-react";
 import { Calendar } from "../ui/calendar";
@@ -47,8 +46,7 @@ type SortField =
   | "created_at"
   | "email"
   | "total"
-  | "is_flagged"
-  | "product";
+  | "is_flagged";
 type SortDirection = "asc" | "desc";
 
 interface Order {
@@ -61,13 +59,6 @@ interface Order {
   created_at: string;
   total: number | null;
   is_flagged?: boolean;
-  details?: {
-    product: string;
-    sku: string;
-    upc: string;
-    sale: number;
-    cost: number;
-  } | null;
 }
 
 const statusColors = {
@@ -95,25 +86,13 @@ const OrdersManagement = () => {
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [showAllOrders, setShowAllOrders] = useState<boolean>(false);
   const [flaggedOrders, setFlaggedOrders] = useState<Record<string, boolean>>({});
-  const [products, setProducts] = useState<Array<{id: string, name: string}>>([]);
-  const [productFilter, setProductFilter] = useState<string>("all");
 
   useEffect(() => {
     loadOrders();
-    loadProducts();
     // Set up polling to refresh orders every 30 seconds
     const interval = setInterval(loadOrders, 30000);
     return () => clearInterval(interval);
   }, [sortField, sortDirection]);
-
-  const loadProducts = async () => {
-    try {
-      const productsData = await getProducts();
-      setProducts(productsData);
-    } catch (error) {
-      console.error("Error loading products:", error);
-    }
-  };
 
   // Reset date filter when toggling between all orders and last 30 days
   useEffect(() => {
@@ -124,7 +103,7 @@ const OrdersManagement = () => {
     }
   }, [showAllOrders]);
 
-  // Apply filters whenever orders, statusFilter, searchQuery, date range, or product filter changes
+  // Apply filters whenever orders, statusFilter, searchQuery, or date range changes
   useEffect(() => {
     let result = [...orders];
     
@@ -133,21 +112,13 @@ const OrdersManagement = () => {
       result = result.filter(order => order.status === statusFilter);
     }
     
-    // Apply product filter
-    if (productFilter !== "all") {
-      result = result.filter(order => 
-        order.details && order.details.product === productFilter
-      );
-    }
-    
     // Apply search filter (case insensitive)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter(order => 
         order.customer_name.toLowerCase().includes(query) ||
         order.email.toLowerCase().includes(query) ||
-        order.order_number.toLowerCase().includes(query) ||
-        (order.details && order.details.product.toLowerCase().includes(query))
+        order.order_number.toLowerCase().includes(query)
       );
     }
     
@@ -171,12 +142,11 @@ const OrdersManagement = () => {
     }
     
     setFilteredOrders(result);
-  }, [orders, statusFilter, searchQuery, dateFrom, dateTo, productFilter]);
+  }, [orders, statusFilter, searchQuery, dateFrom, dateTo]);
 
   const loadOrders = async () => {
     try {
-      // Use getOrdersWithDetails to get orders with product information
-      const data = await getOrdersWithDetails();
+      const data = await getOrders();
       
       // Initialize flaggedOrders state from database
       const flaggedOrdersMap = {};
@@ -196,12 +166,6 @@ const OrdersManagement = () => {
           const aValue = a.is_flagged ? 1 : 0;
           const bValue = b.is_flagged ? 1 : 0;
           return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
-        } else if (sortField === "product") {
-          const aValue = a.details?.product || "";
-          const bValue = b.details?.product || "";
-          return sortDirection === "asc"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
         }
         return sortDirection === "asc"
           ? a[sortField].localeCompare(b[sortField])
@@ -386,109 +350,92 @@ const OrdersManagement = () => {
             className="w-full"
           />
         </div>
-          <div className="flex gap-2 flex-wrap">
-            <div className="flex items-center gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-[130px] justify-start text-left font-normal",
-                      !dateFrom && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateFrom ? format(dateFrom, "MMM d, yyyy") : "From Date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateFrom}
-                    onSelect={setDateFrom}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-[130px] justify-start text-left font-normal",
-                      !dateTo && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateTo ? format(dateTo, "MMM d, yyyy") : "To Date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateTo}
-                    onSelect={setDateTo}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              
-              {((dateFrom && !showAllOrders) || dateTo) && (
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => {
-                    setDateFrom(undefined);
-                    setDateTo(undefined);
-                  }}
+        <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[130px] justify-start text-left font-normal",
+                    !dateFrom && "text-muted-foreground"
+                  )}
                 >
-                  Clear
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateFrom ? format(dateFrom, "MMM d, yyyy") : "From Date"}
                 </Button>
-              )}
-            </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateFrom}
+                  onSelect={setDateFrom}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
             
-            <Select
-              value={statusFilter}
-              onValueChange={setStatusFilter}
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Orders</SelectItem>
-                <SelectItem 
-                  value="pending" 
-                  className={`${statusColors.pending.light} ${statusColors.pending.dark}`}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[130px] justify-start text-left font-normal",
+                    !dateTo && "text-muted-foreground"
+                  )}
                 >
-                  Pending
-                </SelectItem>
-                <SelectItem 
-                  value="complete" 
-                  className={`${statusColors.complete.light} ${statusColors.complete.dark}`}
-                >
-                  Complete
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateTo ? format(dateTo, "MMM d, yyyy") : "To Date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateTo}
+                  onSelect={setDateTo}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
             
-            <Select
-              value={productFilter}
-              onValueChange={setProductFilter}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by product" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Products</SelectItem>
-                {products.map(product => (
-                  <SelectItem key={product.id} value={product.name}>
-                    {product.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {((dateFrom && !showAllOrders) || dateTo) && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  setDateFrom(undefined);
+                  setDateTo(undefined);
+                }}
+              >
+                Clear
+              </Button>
+            )}
           </div>
+          
+          <Select
+            value={statusFilter}
+            onValueChange={setStatusFilter}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Orders</SelectItem>
+              <SelectItem 
+                value="pending" 
+                className={`${statusColors.pending.light} ${statusColors.pending.dark}`}
+              >
+                Pending
+              </SelectItem>
+              <SelectItem 
+                value="complete" 
+                className={`${statusColors.complete.light} ${statusColors.complete.dark}`}
+              >
+                Complete
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="overflow-x-auto -mx-6 sm:mx-0">
@@ -587,22 +534,6 @@ const OrdersManagement = () => {
                 <div className="flex items-center gap-2">
                   Contact
                   {sortField === "email" && (
-                    <span className="text-xs">
-                      {sortDirection === "asc" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </div>
-              </th>
-              <th
-                className="text-left py-3 px-2 cursor-pointer select-none group hover:bg-gray-50 dark:hover:bg-gray-800"
-                onClick={() => {
-                  setSortField("product");
-                  setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  Product
-                  {sortField === "product" && (
                     <span className="text-xs">
                       {sortDirection === "asc" ? "↑" : "↓"}
                     </span>
@@ -844,45 +775,6 @@ const OrdersManagement = () => {
                   <div className="text-sm text-muted-foreground">
                     {order.phone}
                   </div>
-                </td>
-                <td className="py-3 px-2">
-                  <Select
-                    value={order.details?.product || "Carton of eggs"}
-                    onValueChange={async (newProduct) => {
-                      if (newProduct === order.details?.product) return;
-                      setUpdatingStatus(order.order_number);
-                      try {
-                        // This would need a new API function to update the product
-                        // For now, we'll just reload the orders to show the concept
-                        toast({
-                          title: "Product Updated",
-                          description: `Order product updated to ${newProduct}`,
-                        });
-                        await loadOrders();
-                      } catch (error) {
-                        console.error("Error updating product:", error);
-                        toast({
-                          variant: "destructive",
-                          title: "Error",
-                          description: "Failed to update product",
-                        });
-                      } finally {
-                        setUpdatingStatus(null);
-                      }
-                    }}
-                    disabled={updatingStatus === order.order_number}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {products.map(product => (
-                        <SelectItem key={product.id} value={product.name}>
-                          {product.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </td>
                 <td className="py-3 px-2">{order.order_number}</td>
                 <td className="py-3 px-2">

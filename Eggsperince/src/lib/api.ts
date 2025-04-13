@@ -1049,54 +1049,12 @@ export async function importOrdersFromCSV(csvContent: string) {
   return results;
 }
 
-// Settings Management Functions
-export async function getSettings(key: string) {
-  const { data, error } = await supabase
-    .from("settings")
-    .select("value")
-    .eq("key", key)
-    .single();
-
-  if (error) {
-    console.error(`Error fetching setting ${key}:`, error);
-    return null;
-  }
-
-  return data.value;
-}
-
-export async function updateSettings(key: string, value: any) {
-  const { data, error } = await supabase
-    .from("settings")
-    .update({ value })
-    .eq("key", key)
-    .select()
-    .single();
-
-  if (error) {
-    console.error(`Error updating setting ${key}:`, error);
-    throw error;
-  }
-
-  return data;
-}
-
-export async function getProductDisplaySetting() {
-  const settings = await getSettings("product_display");
-  return settings ? settings.show_product_selection : true;
-}
-
-export async function updateProductDisplaySetting(showProductSelection: boolean) {
-  return await updateSettings("product_display", { show_product_selection: showProductSelection });
-}
-
 export async function createOrder(orderData: {
   order_number: string;
   customer_name: string;
   email: string;
   phone: string;
   quantity: number;
-  product_name?: string;
 }) {
   // First check if we have enough stock
   const { data: currentStock } = await supabase
@@ -1113,7 +1071,7 @@ export async function createOrder(orderData: {
   const { data: product } = await supabase
     .from("products")
     .select("*")
-    .eq("name", orderData.product_name || "Carton of eggs")
+    .eq("name", "Carton of eggs")
     .single();
 
   if (!product) {
@@ -1121,11 +1079,9 @@ export async function createOrder(orderData: {
   }
 
   // Create order and update stock in a transaction using RPC
-  // Only include fields that exist in the 'orders' table
-  const { order_number, customer_name, email, phone, quantity } = orderData;
   const { data: order, error: orderError } = await supabase
     .from("orders")
-    .insert([{ order_number, customer_name, email, phone, quantity }])
+    .insert([orderData])
     .select()
     .single();
 

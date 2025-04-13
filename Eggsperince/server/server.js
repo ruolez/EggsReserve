@@ -12,7 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+/* app.use(cors()); */ // Disabled: CORS handled by nginx
 app.use(express.json());
 
 // Create Supabase client
@@ -376,7 +376,13 @@ cron.schedule('0 0 * * *', increaseStockDaily, {
 });
 
 // Start the server
+/*
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('Daily stock increase scheduled for midnight');
+});
+*/
+app.listen(PORT, '127.0.0.1', () => {
+  console.log(`Server running on port ${PORT} (localhost only)`);
   console.log('Daily stock increase scheduled for midnight');
 });
