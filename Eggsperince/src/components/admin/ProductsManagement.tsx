@@ -50,6 +50,7 @@ const ProductsManagement = () => {
     sku: "",
     upc: "",
   });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     loadProducts();
@@ -124,6 +125,19 @@ const ProductsManagement = () => {
       sku: product.sku || "",
       upc: product.upc || "",
     });
+    setIsDialogOpen(true);
+  };
+
+  const handleAdd = () => {
+    setEditingProduct(null);
+    setFormData({
+      name: "",
+      sale_price: "",
+      cost_price: "",
+      sku: "",
+      upc: "",
+    });
+    setIsDialogOpen(true);
   };
 
   if (isLoading) {
@@ -134,9 +148,9 @@ const ProductsManagement = () => {
     <Card className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Products</h2>
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={handleAdd}>
               <Plus className="h-4 w-4 mr-2" /> Add Product
             </Button>
           </DialogTrigger>
@@ -243,32 +257,13 @@ const ProductsManagement = () => {
                 <td className="py-3 px-2">{product.upc || "-"}</td>
                 <td className="py-3 px-2">
                   <div className="flex space-x-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(product)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent
-                        // Disable all animations that cause the dialog to move
-                        style={{
-                          animation: 'none',
-                          transform: 'translate(-50%, -50%)',
-                          transition: 'none'
-                        }}
-                      >
-                        <DialogHeader>
-                          <DialogTitle>Edit Product</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                          {/* Same form fields as add product */}
-                        </form>
-                      </DialogContent>
-                    </Dialog>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(product)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
 
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
